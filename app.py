@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel                                                                        
+import database  # creates DB on startup
 import sqlite3
 from chatbot import chatbot
 
