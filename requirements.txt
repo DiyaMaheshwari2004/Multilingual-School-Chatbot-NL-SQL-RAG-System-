@@ -1,4 +1,5 @@
 fastapi
 uvicorn
 requests
-streamlit
+sentence-transformers
+scikit-learn
