@@ -99,6 +99,6 @@ cursor.execute("INSERT INTO timetable VALUES (8, 'Science', '11:00 AM', 'Wednesd
 conn.commit()
 conn.close()
 
-setup_db()
-
 print("✅ Realistic database ready!")
+
+setup_db()
