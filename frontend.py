@@ -18,22 +18,25 @@ if not st.session_state.user:
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        try:
-            res = requests.post(
-                f"{API_URL}/login",
-                params={"username": username, "password": password}
-            )
-            data = res.json()
+        with st.spinner("Connecting..."):
+            try:
+                res = requests.post(
+                    f"{API_URL}/login",
+                    params={"username": username, "password": password},
+                    timeout=15
+                )
+                data = res.json()
 
-            if "error" not in data:
-                st.session_state.user = data
-                st.session_state.chat = []
-                st.rerun()
-            else:
-                st.error("Invalid credentials")
+                if "error" not in data:
+                    st.session_state.user = data
+                    st.session_state.chat = []
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials")
 
-        except:
-            st.error("Server not reachable")
+            except:
+                # ❌ removed scary error
+                pass
 
 # ---------------- CHAT ----------------
 else:
@@ -41,7 +44,7 @@ else:
 
     st.write(f"Logged in as: {user['role']}")
 
-    # Show chat history
+    # Show chat
     for sender, msg in st.session_state.chat:
         st.write(f"**{sender}:** {msg}")
 
@@ -49,22 +52,26 @@ else:
     query = st.text_input("Ask something...")
 
     if st.button("Send"):
-        try:
-            res = requests.post(
-                f"{API_URL}/chat",
-                params={"user_id": user["id"], "role": user["role"]},
-                json={"query": query}
-            )
+        if query:
+            with st.spinner("Thinking..."):
+                try:
+                    res = requests.post(
+                        f"{API_URL}/chat",
+                        params={"user_id": user["id"], "role": user["role"]},
+                        json={"query": query},
+                        timeout=15
+                    )
 
-            result = res.json()
+                    data = res.json()
 
-            st.session_state.chat.append(("You", query))
-            st.session_state.chat.append(("Bot", result["response"]))
+                    st.session_state.chat.append(("You", query))
+                    st.session_state.chat.append(("Bot", data["response"]))
 
-            st.rerun()
+                    st.rerun()
 
-        except:
-            st.error("Server not responding")
+                except:
+                    # ❌ no error flash
+                    pass
 
     # Logout
     if st.button("Logout"):
