@@ -1,6 +1,5 @@
 import sqlite3
 
-# Connect DB
 conn = sqlite3.connect("school.db")
 cursor = conn.cursor()
 
@@ -35,33 +34,36 @@ CREATE TABLE IF NOT EXISTS students (
 )
 """)
 
-# MARKS
+# MARKS (add UNIQUE to prevent duplicates)
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS marks (
     student_id INTEGER,
     subject TEXT,
     marks INTEGER,
-    exam TEXT
+    exam TEXT,
+    UNIQUE(student_id, subject, exam)
 )
 """)
 
-# ASSIGNMENTS
+# ASSIGNMENTS (add UNIQUE)
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS assignments (
     class INTEGER,
     subject TEXT,
     assignment TEXT,
-    due_date TEXT
+    due_date TEXT,
+    UNIQUE(class, subject, assignment)
 )
 """)
 
-# TIMETABLE
+# TIMETABLE (add UNIQUE)
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS timetable (
     class INTEGER,
     subject TEXT,
     time TEXT,
-    day TEXT
+    day TEXT,
+    UNIQUE(class, subject, time, day)
 )
 """)
 
@@ -104,4 +106,4 @@ cursor.execute("INSERT OR IGNORE INTO timetable VALUES (8, 'Science', '11:00 AM'
 conn.commit()
 conn.close()
 
-print("✅ Realistic database ready!")
+print("✅ Database ready (no duplicates)")
