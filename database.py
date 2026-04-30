@@ -1,7 +1,10 @@
 import sqlite3
 
+# Connect DB
 conn = sqlite3.connect("school.db")
 cursor = conn.cursor()
+
+# ---------------- TABLES ----------------
 
 # USERS
 cursor.execute("""
@@ -13,7 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
 )
 """)
 
-# Parents
+# PARENTS
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS parents (
     id INTEGER PRIMARY KEY,
@@ -21,7 +24,7 @@ CREATE TABLE IF NOT EXISTS parents (
 )
 """)
 
-# Students
+# STUDENTS
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS students (
     id INTEGER PRIMARY KEY,
@@ -32,7 +35,7 @@ CREATE TABLE IF NOT EXISTS students (
 )
 """)
 
-# Marks
+# MARKS
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS marks (
     student_id INTEGER,
@@ -42,7 +45,7 @@ CREATE TABLE IF NOT EXISTS marks (
 )
 """)
 
-# Assignments
+# ASSIGNMENTS
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS assignments (
     class INTEGER,
@@ -52,7 +55,7 @@ CREATE TABLE IF NOT EXISTS assignments (
 )
 """)
 
-# Timetable
+# TIMETABLE
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS timetable (
     class INTEGER,
@@ -62,7 +65,7 @@ CREATE TABLE IF NOT EXISTS timetable (
 )
 """)
 
-# -------- REAL DATA --------
+# ---------------- DATA ----------------
 
 # Parents
 cursor.execute("INSERT OR IGNORE INTO parents VALUES (1, 'Rajesh Sharma')")
@@ -81,24 +84,24 @@ cursor.execute("INSERT OR IGNORE INTO users VALUES ('rajesh', '123', 'parent', 1
 cursor.execute("INSERT OR IGNORE INTO users VALUES ('sunita', '123', 'parent', 2)")
 
 # Marks
-cursor.execute("INSERT INTO marks VALUES (1, 'Maths', 85, 'Midterm')")
-cursor.execute("INSERT INTO marks VALUES (1, 'Science', 78, 'Midterm')")
-cursor.execute("INSERT INTO marks VALUES (2, 'Maths', 90, 'Midterm')")
-cursor.execute("INSERT INTO marks VALUES (3, 'Science', 88, 'Midterm')")
+cursor.execute("INSERT OR IGNORE INTO marks VALUES (1, 'Maths', 85, 'Midterm')")
+cursor.execute("INSERT OR IGNORE INTO marks VALUES (1, 'Science', 78, 'Midterm')")
+cursor.execute("INSERT OR IGNORE INTO marks VALUES (2, 'Maths', 90, 'Midterm')")
+cursor.execute("INSERT OR IGNORE INTO marks VALUES (3, 'Science', 88, 'Midterm')")
 
 # Assignments
-cursor.execute("INSERT INTO assignments VALUES (5, 'Maths', 'Complete chapter 3', '2026-05-01')")
-cursor.execute("INSERT INTO assignments VALUES (3, 'English', 'Write essay', '2026-05-02')")
-cursor.execute("INSERT INTO assignments VALUES (8, 'Science', 'Read chapter 5', '2026-05-03')")
+cursor.execute("INSERT OR IGNORE INTO assignments VALUES (5, 'Maths', 'Complete chapter 3', '2026-05-01')")
+cursor.execute("INSERT OR IGNORE INTO assignments VALUES (3, 'English', 'Write essay', '2026-05-02')")
+cursor.execute("INSERT OR IGNORE INTO assignments VALUES (8, 'Science', 'Read chapter 5', '2026-05-03')")
 
 # Timetable
-cursor.execute("INSERT INTO timetable VALUES (5, 'Maths', '10:00 AM', 'Monday')")
-cursor.execute("INSERT INTO timetable VALUES (3, 'English', '9:00 AM', 'Tuesday')")
-cursor.execute("INSERT INTO timetable VALUES (8, 'Science', '11:00 AM', 'Wednesday')")
+cursor.execute("INSERT OR IGNORE INTO timetable VALUES (5, 'Maths', '10:00 AM', 'Monday')")
+cursor.execute("INSERT OR IGNORE INTO timetable VALUES (3, 'English', '9:00 AM', 'Tuesday')")
+cursor.execute("INSERT OR IGNORE INTO timetable VALUES (8, 'Science', '11:00 AM', 'Wednesday')")
+
+# ---------------- FINALIZE ----------------
 
 conn.commit()
 conn.close()
 
 print("✅ Realistic database ready!")
-
-setup_db()
