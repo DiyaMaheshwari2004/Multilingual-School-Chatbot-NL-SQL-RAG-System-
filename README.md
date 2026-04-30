@@ -108,6 +108,16 @@ streamlit run frontend.py
 ```
 
 ---
+## Screenshots
+
+### Login Page
+![Login](screenshots/login.png)
+
+### Chat Interface
+![Chat](screenshots/chat.png)
+
+### Hindi Query Example
+![Hindi](screenshots/hindi.png)
 
 ## Demo Credentials
 
