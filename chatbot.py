@@ -1,104 +1,111 @@
 import sqlite3
-from rag import retrieve_context
 
 
 def connect_db():
     return sqlite3.connect("school.db")
 
 
-# 🔥 MULTILINGUAL NORMALIZATION
-def normalize_query(query):
-    q = query.lower()
-
-    # Hindi + Hinglish mapping
-    if any(word in q for word in ["mark", "marks", "number", "result", "marks batao", "marks dikhao"]):
-        return "marks"
-
-    if any(word in q for word in ["assignment", "homework", "kaam", "kaam kya hai"]):
-        return "assignment"
-
-    if any(word in q for word in ["timetable", "time", "schedule", "samay"]):
-        return "timetable"
-
-    return "general"
-
-
-# 🔥 LANGUAGE DETECTION (basic)
-def detect_language(query):
-    if any(word in query for word in ["kya", "hai", "ka", "mera", "dikhao"]):
-        return "hindi"
-    return "english"
+#  Remove duplicates safely
+def remove_duplicates(data):
+    return list(dict.fromkeys(data))
 
 
 def chatbot(query, role, students):
-    intent = normalize_query(query)
-    lang = detect_language(query)
-
     conn = connect_db()
     cursor = conn.cursor()
 
+    query = query.lower()
+    response = ""
+
     # ---------------- MARKS ----------------
-    if intent == "marks":
-        response = "📊 Marks:\n" if lang == "english" else "📊 अंक:\n"
+    if "mark" in query:
+
+        response = "📊 Marks:\n"
 
         for s in students:
-            cursor.execute("SELECT subject, marks FROM marks WHERE student_id=?", (s["id"],))
-            data = cursor.fetchall()
+            cursor.execute(
+                "SELECT DISTINCT subject, marks FROM marks WHERE student_id=?",
+                (s["id"],)
+            )
+            marks = cursor.fetchall()
 
-            response += f"\n{s['name']}:\n"
-            for sub, mark in data:
-                if lang == "english":
-                    response += f" • {sub}: {mark} marks\n"
-                else:
-                    response += f" • {sub}: {mark} अंक\n"
+            if marks:
+                response += f"\n{s['name']}:\n"
 
-        conn.close()
-        return response
+                marks_list = [
+                    f"• {m[0]}: {m[1]} marks" for m in marks
+                ]
 
-    # ---------------- ASSIGNMENT ----------------
-    elif intent == "assignment":
-        cls = students[0]["class"]
-        cursor.execute("SELECT subject, assignment, due_date FROM assignments WHERE class=?", (cls,))
-        data = cursor.fetchall()
+                marks_list = remove_duplicates(marks_list)
 
-        conn.close()
+                response += "\n".join(marks_list) + "\n"
+            else:
+                response += f"\n{s['name']}: No marks found\n"
 
-        if lang == "english":
-            response = "📝 Assignments:\n"
-            for sub, ass, due in data:
-                response += f" • {sub}: {ass} (Due: {due})\n"
-        else:
-            response = "📝 कार्य:\n"
-            for sub, ass, due in data:
-                response += f" • {sub}: {ass} (अंतिम तिथि: {due})\n"
+    # ---------------- ASSIGNMENTS ----------------
+    elif "assignment" in query:
 
-        return response
+        response = "📝 Assignments:\n"
+
+        for s in students:
+            cursor.execute(
+                "SELECT DISTINCT subject, assignment, due_date FROM assignments WHERE class=?",
+                (s["class"],)
+            )
+            assignments = cursor.fetchall()
+
+            if assignments:
+                response += f"\n{s['name']}:\n"
+
+                assign_list = [
+                    f"• {a[0]}: {a[1]} (Due: {a[2]})"
+                    for a in assignments
+                ]
+
+                assign_list = remove_duplicates(assign_list)
+
+                response += "\n".join(assign_list) + "\n"
+            else:
+                response += f"\n{s['name']}: No assignments found\n"
 
     # ---------------- TIMETABLE ----------------
-    elif intent == "timetable":
-        cls = students[0]["class"]
-        cursor.execute("SELECT subject, time, day FROM timetable WHERE class=?", (cls,))
-        data = cursor.fetchall()
+    elif "time" in query or "schedule" in query:
 
-        conn.close()
+        response = "📅 Timetable:\n"
 
-        if lang == "english":
-            response = "📅 Timetable:\n"
-            for sub, time, day in data:
-                response += f" • {day}: {sub} at {time}\n"
-        else:
-            response = "📅 समय सारणी:\n"
-            for sub, time, day in data:
-                response += f" • {day}: {sub} {time} बजे\n"
+        for s in students:
+            cursor.execute(
+                "SELECT DISTINCT subject, time, day FROM timetable WHERE class=?",
+                (s["class"],)
+            )
+            timetable = cursor.fetchall()
 
-        return response
+            if timetable:
+                response += f"\n{s['name']}:\n"
 
-    # ---------------- RAG ----------------
+                time_list = [
+                    f"• {t[0]} at {t[1]} on {t[2]}"
+                    for t in timetable
+                ]
+
+                time_list = remove_duplicates(time_list)
+
+                response += "\n".join(time_list) + "\n"
+            else:
+                response += f"\n{s['name']}: No timetable found\n"
+
+    # ---------------- DEFAULT ----------------
     else:
-        conn.close()
-        context = retrieve_context(query)
+        response = (
+            "I can help you with:\n"
+            "• Marks\n"
+            "• Assignments\n"
+            "• Timetable\n\n"
+            "Try asking:\n"
+            "- Show my marks\n"
+            "- Show assignments\n"
+            "- Show timetable"
+        )
 
-        if lang == "english":
-            return f"📚 Info: {context}"
-        else:
-            return f"📚 जानकारी: {context}"
+    conn.close()
+    return response
