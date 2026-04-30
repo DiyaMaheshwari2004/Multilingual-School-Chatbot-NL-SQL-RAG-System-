@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+streamlit
+openai
+pandas
+
+pip install -r requirements.txt
