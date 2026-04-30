@@ -17,27 +17,28 @@ if not st.session_state.logged_in:
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        res = requests.post(
-            "http://127.0.0.1:8000/login",
-            params={"username": username, "password": password}
-        )
+      res = requests.post(
+        f"{API_URL}/login",
+        params={"username": username, "password": password}
+    )   
+      data = res.json()
 
-        data = res.json()
-
-        if "error" not in data:
+      if "error" not in data:
             st.session_state.logged_in = True
             st.session_state.user = data
             st.rerun()
-        else:
+      else:
             st.error("Invalid credentials")
 
     st.stop()
 
 # USER
+API_URL = "https://multilingual-school-chatbot-nl-sql-rag.onrender.com"
+
 user = st.session_state.user
 
 res = requests.post(
-    "http://127.0.0.1:8000/chat",
+    f"{API_URL}/chat",
     params={"user_id": user["id"], "role": user["role"]},
     json={"query": "hello"}
 )
