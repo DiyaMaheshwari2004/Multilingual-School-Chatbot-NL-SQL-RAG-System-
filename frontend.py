@@ -1,5 +1,6 @@
 import streamlit as st
-import requests
+import requests 
+API_URL = "https://multilingual-school-chatbot-nl-sql-rag.onrender.com"
 
 st.set_page_config(page_title="School Assistant")
 
