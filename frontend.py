@@ -70,7 +70,7 @@ query = st.text_input("Ask something...")
 
 if st.button("Send"):
     res = requests.post(
-        "http://127.0.0.1:8000/chat",
+        f"{API_URL}/chat",
         params={"user_id": user["id"], "role": user["role"]},
         json={"query": query}
     )
