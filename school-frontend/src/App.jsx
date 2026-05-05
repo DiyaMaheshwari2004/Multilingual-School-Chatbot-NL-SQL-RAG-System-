@@ -1,41 +1,36 @@
 import { useState, useEffect } from "react";
+import botImage from "./assets/bot.png";
 
-const API_URL = "https://multilingual-school-chatbot-nl-sql-rag.onrender.com";
+const API_URL =
+  "https://multilingual-school-chatbot-nl-sql-rag.onrender.com";
 
-export default function App() {
+function App() {
+  const [user, setUser] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [query, setQuery] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const [user, setUser] = useState(null);
-
-  const [students, setStudents] = useState([]);
-
-  const [messages, setMessages] = useState([
-    {
-      sender: "Assistant",
-      text: "Welcome to EduAI Assistant. Ask about marks, assignments or timetable.",
-    },
-  ]);
-
-  const [query, setQuery] = useState("");
-
-  // ---------------- RANDOM FACTS ----------------
-  const facts = [
-    "Students who revise within 24 hours remember information longer.",
-    "Reading 20 minutes daily improves vocabulary and focus.",
-    "Short study sessions are often more effective than long sessions.",
-    "Sleep plays a major role in memory retention and learning.",
-    "Mathematics improves logical and analytical thinking skills.",
-    "Consistency is more important than studying for long hours occasionally.",
+  // ---------------- INSIGHTS ----------------
+  const insights = [
+    "Consistency beats last-minute studying.",
+    "Reading daily improves memory retention.",
+    "Small progress every day leads to big achievements.",
+    "Revision is the key to long-term learning.",
+    "Focused study sessions improve productivity.",
+    "Learning is more effective when practiced regularly.",
   ];
 
-  const [fact, setFact] = useState("");
+  const [randomInsight, setRandomInsight] = useState("");
 
   useEffect(() => {
-    const randomFact =
-      facts[Math.floor(Math.random() * facts.length)];
+    const random =
+      insights[Math.floor(Math.random() * insights.length)];
 
-    setFact(randomFact);
+    setRandomInsight(random);
   }, []);
 
   // ---------------- LOGIN ----------------
@@ -57,11 +52,8 @@ export default function App() {
 
       setUser(data);
 
-      const roleType =
-        data.role === "parent" ? "parent" : "student";
-
       const chatRes = await fetch(
-        `${API_URL}/chat?user_id=${data.id}&role=${roleType}`,
+        `${API_URL}/chat?user_id=${data.id}&role=${data.role}`,
         {
           method: "POST",
           headers: {
@@ -76,22 +68,34 @@ export default function App() {
       const chatData = await chatRes.json();
 
       setStudents(chatData.students || []);
+
+      setMessages([
+        {
+          sender: "bot",
+          text:
+            "Welcome to EduAI Assistant.\n\nYou can ask about:\n• Marks\n• Assignments\n• Timetable",
+        },
+      ]);
     } catch (err) {
-      console.error(err);
       alert("Backend not responding");
     }
   };
 
-  // ---------------- CHAT ----------------
+  // ---------------- SEND MESSAGE ----------------
   const sendMessage = async () => {
-    if (!query) return;
+    if (!query.trim()) return;
 
-    const userMessage = {
-      sender: "You",
-      text: query,
-    };
+    const updatedMessages = [
+      ...messages,
+      {
+        sender: "user",
+        text: query,
+      },
+    ];
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(updatedMessages);
+
+    setLoading(true);
 
     try {
       const res = await fetch(
@@ -109,456 +113,290 @@ export default function App() {
 
       const data = await res.json();
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "Assistant",
-          text: data.response,
-        },
-      ]);
-
       if (data.students) {
         setStudents(data.students);
       }
-    } catch (err) {
-      console.error(err);
 
-      setMessages((prev) => [
-        ...prev,
+      setMessages([
+        ...updatedMessages,
         {
-          sender: "Assistant",
-          text: "Server is temporarily unavailable.",
+          sender: "bot",
+          text: data.response,
+        },
+      ]);
+    } catch (err) {
+      setMessages([
+        ...updatedMessages,
+        {
+          sender: "bot",
+          text: "Server not responding.",
         },
       ]);
     }
 
     setQuery("");
-  };
-
-  // ---------------- LOGOUT ----------------
-  const logout = () => {
-    setUser(null);
-    setStudents([]);
-    setMessages([
-      {
-        sender: "Assistant",
-        text: "Welcome to EduAI Assistant.",
-      },
-    ]);
+    setLoading(false);
   };
 
   // ---------------- LOGIN SCREEN ----------------
   if (!user) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          background:
-            "linear-gradient(to right, #0f172a, #1e3a8a)",
-          fontFamily: "Arial",
-        }}
-      >
-        <div
-          style={{
-            width: "390px",
-            background: "rgba(255,255,255,0.08)",
-            padding: "45px",
-            borderRadius: "24px",
-            backdropFilter: "blur(12px)",
-            boxShadow: "0 0 40px rgba(0,0,0,0.3)",
-            color: "white",
-          }}
-        >
-          <h1
-            style={{
-              textAlign: "center",
-              marginBottom: "10px",
-              fontSize: "34px",
-            }}
-          >
-            EduAI Portal
-          </h1>
+      <div className="min-h-screen bg-gradient-to-br from-[#081028] via-[#0f172a] to-[#111827] flex items-center justify-center px-4 relative overflow-hidden">
 
-          <p
-            style={{
-              textAlign: "center",
-              opacity: 0.8,
-              marginBottom: "35px",
-            }}
-          >
-            Smart Academic Assistant
-          </p>
+        {/* Glow Effects */}
+        <div className="absolute w-[500px] h-[500px] bg-blue-500 opacity-20 blur-3xl rounded-full top-[-100px] left-[-100px]" />
 
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "15px",
-              borderRadius: "12px",
-              border: "none",
-              outline: "none",
-              marginBottom: "18px",
-              background: "rgba(255,255,255,0.12)",
-              color: "white",
-              fontSize: "16px",
-            }}
-          />
+        <div className="absolute w-[400px] h-[400px] bg-indigo-500 opacity-20 blur-3xl rounded-full bottom-[-100px] right-[-100px]" />
 
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "15px",
-              borderRadius: "12px",
-              border: "none",
-              outline: "none",
-              marginBottom: "22px",
-              background: "rgba(255,255,255,0.12)",
-              color: "white",
-              fontSize: "16px",
-            }}
-          />
+        {/* Login Card */}
+        <div className="bg-[#111827]/90 backdrop-blur-xl border border-white/10 p-10 rounded-3xl w-full max-w-md shadow-2xl z-10">
 
-          <button
-            onClick={handleLogin}
-            style={{
-              width: "100%",
-              padding: "15px",
-              border: "none",
-              borderRadius: "12px",
-              background: "#2563eb",
-              color: "white",
-              fontWeight: "bold",
-              fontSize: "16px",
-              cursor: "pointer",
-            }}
-          >
-            Login
-          </button>
+          {/* Logo */}
+          <div className="flex flex-col items-center mb-8">
+            <img
+              src={botImage}
+              alt="bot"
+              className="w-24 h-24 rounded-full shadow-2xl mb-5"
+            />
+
+            <h1 className="text-4xl font-bold text-white mb-2">
+              EduAI Portal
+            </h1>
+
+            <p className="text-gray-400 text-center">
+              Intelligent Academic Assistant
+            </p>
+          </div>
+
+          {/* Inputs */}
+          <div className="space-y-5">
+
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) =>
+                setUsername(e.target.value)
+              }
+              className="w-full bg-[#1e293b] text-white p-4 rounded-xl outline-none border border-gray-700 focus:border-blue-500"
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+              className="w-full bg-[#1e293b] text-white p-4 rounded-xl outline-none border border-gray-700 focus:border-blue-500"
+            />
+
+            <button
+              onClick={handleLogin}
+              className="w-full bg-blue-600 hover:bg-blue-700 transition-all text-white py-4 rounded-xl font-semibold shadow-lg"
+            >
+              Login
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  // ---------------- MAIN UI ----------------
+  // ---------------- MAIN DASHBOARD ----------------
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        background:
-          "linear-gradient(to right, #020617, #1e3a8a)",
-        color: "white",
-        fontFamily: "Arial",
-      }}
-    >
+    <div className="min-h-screen bg-gradient-to-br from-[#081028] via-[#0f172a] to-[#172554] text-white flex">
+
       {/* SIDEBAR */}
-      <div
-        style={{
-          width: "330px",
-          padding: "25px",
-          background: "rgba(255,255,255,0.06)",
-          borderRight: "1px solid rgba(255,255,255,0.08)",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-        }}
-      >
+      <div className="w-[320px] bg-[#0f172a]/90 border-r border-white/10 p-6 flex flex-col justify-between">
+
         <div>
-          <h2
-            style={{
-              marginBottom: "30px",
-              fontSize: "28px",
-            }}
-          >
-            Student Dashboard
-          </h2>
 
-          {students.map((student, index) => (
-            <div
-              key={index}
-              style={{
-                background: "rgba(255,255,255,0.1)",
-                padding: "22px",
-                borderRadius: "20px",
-                marginBottom: "22px",
-                boxShadow: "0 0 20px rgba(0,0,0,0.15)",
-              }}
-            >
+          {/* Header */}
+          <div className="mb-10">
+            <h1 className="text-3xl font-bold tracking-tight text-white">
+              EduAI Dashboard
+            </h1>
+
+            <p className="text-sm text-slate-400 mt-1">
+              Intelligent Student Workspace
+            </p>
+          </div>
+
+          {/* STUDENT CARDS */}
+          <div className="space-y-4">
+
+            {students.map((student) => (
               <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "15px",
-                }}
+                key={student.id}
+                className="bg-[#1e293b] p-4 rounded-2xl border border-white/10 shadow-lg"
               >
-                <div
-                  style={{
-                    width: "60px",
-                    height: "60px",
-                    borderRadius: "50%",
-                    background: "#2563eb",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "24px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {student.name.charAt(0)}
-                </div>
+                <div className="flex items-center gap-4">
 
-                <div>
-                  <h3>{student.name}</h3>
+                  {/* Student Icon */}
+                  <div className="w-11 h-11 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold shadow-md">
+                    {student.name[0]}
+                  </div>
 
-                  <p
-                    style={{
-                      opacity: 0.8,
-                    }}
-                  >
-                    Class {student.class}
-                  </p>
+                  {/* Student Info */}
+                  <div>
+                    <h2 className="text-[16px] font-semibold">
+                      {student.name}
+                    </h2>
+
+                    <p className="text-gray-400 text-sm">
+                      Class {student.class}
+                    </p>
+                  </div>
                 </div>
               </div>
+            ))}
+
+          </div>
+
+          {/* INSIGHTS + SUGGESTIONS */}
+          <div className="mt-8 space-y-4">
+
+            {/* Quote Card */}
+            <div className="bg-[#1e293b] border border-white/10 rounded-2xl p-5 shadow-lg">
+
+              <p className="text-sm italic text-slate-300 leading-relaxed">
+                “{randomInsight}”
+              </p>
+
+              <div className="mt-3 text-xs text-slate-500">
+                Daily Learning Insight
+              </div>
             </div>
-          ))}
 
-          {/* FACT CARD */}
-          <div
-            style={{
-              marginTop: "30px",
-              background: "rgba(255,255,255,0.08)",
-              padding: "20px",
-              borderRadius: "18px",
-              lineHeight: "1.7",
-            }}
-          >
-            <h3
-              style={{
-                marginBottom: "12px",
-              }}
-            >
-              Daily Learning Insight
-            </h3>
+            {/* Suggestions */}
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 shadow-xl">
 
-            <p
-              style={{
-                opacity: 0.85,
-              }}
-            >
-              {fact}
-            </p>
+              <h3 className="font-semibold text-white mb-3">
+                Quick Suggestions
+              </h3>
+
+              <div className="space-y-2 text-sm text-blue-100">
+                <div>• Ask for subject-wise marks</div>
+                <div>• View upcoming assignments</div>
+                <div>• Check weekly timetable</div>
+                <div>• Track academic performance</div>
+              </div>
+            </div>
+
           </div>
         </div>
 
         {/* LOGOUT */}
         <button
-          onClick={logout}
-          style={{
-            width: "100%",
-            marginTop: "30px",
-            padding: "15px",
-            borderRadius: "12px",
-            border: "none",
-            background: "#dc2626",
-            color: "white",
-            fontWeight: "bold",
-            fontSize: "16px",
-            cursor: "pointer",
+          onClick={() => {
+            setUser(null);
+            setStudents([]);
+            setMessages([]);
           }}
+          className="mt-8 bg-red-500 hover:bg-red-600 transition-all py-4 rounded-xl font-semibold shadow-lg"
         >
           Logout
         </button>
       </div>
 
-      {/* CHAT SECTION */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        {/* TOP HEADER */}
-        <div
-          style={{
-            padding: "22px",
-            borderBottom:
-              "1px solid rgba(255,255,255,0.08)",
-            background: "rgba(255,255,255,0.03)",
-          }}
-        >
-          <h2
-            style={{
-              fontSize: "30px",
-              marginBottom: "8px",
-            }}
-          >
-            EduAI Assistant
-          </h2>
+      {/* MAIN CHAT AREA */}
+      <div className="flex-1 flex flex-col">
 
-          <p
-            style={{
-              opacity: 0.8,
-            }}
-          >
-            Academic support powered by AI
-          </p>
-        </div>
+        {/* TOP BAR */}
+        <div className="p-6 border-b border-white/10 bg-[#0f172a]/70 backdrop-blur-lg">
 
-        {/* WELCOME SECTION */}
-        <div
-          style={{
-            padding: "25px",
-            background: "rgba(255,255,255,0.03)",
-            borderBottom:
-              "1px solid rgba(255,255,255,0.08)",
-          }}
-        >
-          <div
-            style={{
-              background: "rgba(37,99,235,0.15)",
-              border: "1px solid rgba(37,99,235,0.3)",
-              padding: "20px",
-              borderRadius: "18px",
-            }}
-          >
-            <h3
-              style={{
-                marginBottom: "10px",
-              }}
-            >
-              Quick Suggestions
-            </h3>
+          <div className="flex items-center gap-4">
 
-            <div
-              style={{
-                display: "flex",
-                gap: "12px",
-                flexWrap: "wrap",
-              }}
-            >
-              {[
-                "Show my marks",
-                "Show assignments",
-                "Show timetable",
-              ].map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => setQuery(item)}
-                  style={{
-                    padding: "10px 16px",
-                    borderRadius: "12px",
-                    border: "none",
-                    background: "#2563eb",
-                    color: "white",
-                    cursor: "pointer",
-                  }}
-                >
-                  {item}
-                </button>
-              ))}
+            <img
+              src={botImage}
+              alt="bot"
+              className="w-14 h-14 rounded-full shadow-lg"
+            />
+
+            <div>
+              <h1 className="text-2xl font-bold">
+                EduAI Assistant
+              </h1>
+
+              <p className="text-gray-400 text-sm">
+                Smart Academic Support System
+              </p>
             </div>
+
           </div>
         </div>
 
-        {/* CHAT */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "30px",
-          }}
-        >
+        {/* CHAT AREA */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-6">
+
+          {/* CHAT MESSAGES */}
           {messages.map((msg, index) => (
             <div
               key={index}
-              style={{
-                display: "flex",
-                justifyContent:
-                  msg.sender === "You"
-                    ? "flex-end"
-                    : "flex-start",
-                marginBottom: "20px",
-              }}
+              className={`flex ${
+                msg.sender === "user"
+                  ? "justify-end"
+                  : "justify-start"
+              }`}
             >
-              <div
-                style={{
-                  background:
-                    msg.sender === "You"
-                      ? "#2563eb"
-                      : "rgba(255,255,255,0.1)",
-                  padding: "18px",
-                  borderRadius: "18px",
-                  maxWidth: "70%",
-                  whiteSpace: "pre-line",
-                  lineHeight: "1.6",
-                }}
-              >
-                <strong>{msg.sender}</strong>
 
-                <div style={{ marginTop: "8px" }}>
+              {msg.sender === "bot" ? (
+                <div className="flex gap-3 items-start max-w-[75%]">
+
+                  <img
+                    src={botImage}
+                    alt="bot"
+                    className="w-10 h-10 rounded-full shadow-md"
+                  />
+
+                  <div className="bg-[#1e293b] p-5 rounded-2xl whitespace-pre-line border border-white/10 shadow-lg">
+                    {msg.text}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-blue-600 p-5 rounded-2xl max-w-[75%] shadow-lg whitespace-pre-line">
                   {msg.text}
                 </div>
-              </div>
+              )}
+
             </div>
           ))}
+
+          {loading && (
+            <div className="text-gray-400">
+              Thinking...
+            </div>
+          )}
         </div>
 
-        {/* INPUT */}
-        <div
-          style={{
-            padding: "22px",
-            display: "flex",
-            gap: "12px",
-            borderTop:
-              "1px solid rgba(255,255,255,0.08)",
-            background: "rgba(255,255,255,0.03)",
-          }}
-        >
+        {/* INPUT BAR */}
+        <div className="p-6 border-t border-white/10 bg-[#0f172a]/80 backdrop-blur-lg flex gap-4">
+
           <input
             type="text"
-            placeholder="Ask about academics..."
+            placeholder="Ask about marks, timetable or assignments..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            style={{
-              flex: 1,
-              padding: "16px",
-              borderRadius: "12px",
-              border: "none",
-              outline: "none",
-              background: "rgba(255,255,255,0.1)",
-              color: "white",
-              fontSize: "16px",
-            }}
+            onChange={(e) =>
+              setQuery(e.target.value)
+            }
+            onKeyDown={(e) =>
+              e.key === "Enter" && sendMessage()
+            }
+            className="flex-1 bg-[#1e293b] text-white p-4 rounded-2xl outline-none border border-white/10 focus:border-blue-500"
           />
 
           <button
             onClick={sendMessage}
-            style={{
-              padding: "16px 28px",
-              borderRadius: "12px",
-              border: "none",
-              background: "#2563eb",
-              color: "white",
-              fontWeight: "bold",
-              cursor: "pointer",
-              fontSize: "16px",
-            }}
+            className="bg-blue-600 hover:bg-blue-700 px-8 rounded-2xl font-semibold transition-all shadow-lg"
           >
             Send
           </button>
+
         </div>
       </div>
     </div>
   );
 }
+
+export default App;
