@@ -1,12 +1,13 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import sqlite3
-import database  # runs DB setup on startup
+import database
 from chatbot import chatbot
-from fastapi.middleware.cors import CORSMiddleware
-
 
 app = FastAPI()
+
+# ---------------- CORS ----------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,13 +16,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# Request model
+# ---------------- REQUEST MODEL ----------------
 class Query(BaseModel):
     query: str
 
 
-# DB connection
+# ---------------- DB CONNECTION ----------------
 def connect_db():
     return sqlite3.connect("school.db")
 
@@ -29,16 +29,17 @@ def connect_db():
 # ---------------- LOGIN ----------------
 @app.post("/login")
 def login(username: str, password: str):
+
     conn = connect_db()
     cursor = conn.cursor()
 
-    # ✅ Case-insensitive username
     cursor.execute(
         "SELECT role, ref_id FROM users WHERE LOWER(username)=LOWER(?) AND password=?",
         (username, password)
     )
 
     user = cursor.fetchone()
+
     conn.close()
 
     if user:
@@ -59,15 +60,18 @@ def chat(q: Query, user_id: int, role: str):
 
     students = []
 
-    # 👤 STUDENT ROLE
+    # ---------------- STUDENT ----------------
     if role == "student":
+
         cursor.execute(
             "SELECT id, name, class FROM students WHERE id=?",
             (user_id,)
         )
+
         s = cursor.fetchone()
 
         if not s:
+            conn.close()
             return {"response": "Student not found"}
 
         students.append({
@@ -76,15 +80,18 @@ def chat(q: Query, user_id: int, role: str):
             "class": s[2]
         })
 
-    # 👨‍👩‍👧 PARENT ROLE
+    # ---------------- PARENT ----------------
     elif role == "parent":
+
         cursor.execute(
             "SELECT id, name, class FROM students WHERE parent_id=?",
             (user_id,)
         )
+
         data = cursor.fetchall()
 
         if not data:
+            conn.close()
             return {"response": "No children found"}
 
         for s in data:
@@ -96,7 +103,7 @@ def chat(q: Query, user_id: int, role: str):
 
     conn.close()
 
-    # 🤖 Chatbot response
+    # ---------------- CHATBOT RESPONSE ----------------
     response = chatbot(q.query, role, students)
 
     return {
