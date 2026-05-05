@@ -1,52 +1,116 @@
 import { useState } from "react";
 
-export default function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
+const API_URL = "https://multilingual-school-chatbot-nl-sql-rag.onrender.com";
 
+export default function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  const [user, setUser] = useState(null);
+
+  const [students, setStudents] = useState([]);
 
   const [messages, setMessages] = useState([
     {
       sender: "Bot",
-      text: "Hello 👋 Ask me about assignments, marks or timetable.",
+      text: "Hello 👋 Ask me about marks, assignments or timetable.",
     },
   ]);
 
   const [query, setQuery] = useState("");
 
-  // DEMO DASHBOARD DATA
-  const student = {
-    name: username || "Student",
-    class: "5A",
-    attendance: "92%",
-    marks: "88%",
-    assignments: 3,
-  };
+  // ---------------- LOGIN ----------------
+  const handleLogin = async () => {
+    try {
+      const res = await fetch(
+        `${API_URL}/login?username=${username}&password=${password}`,
+        {
+          method: "POST",
+        }
+      );
 
-  // LOGIN
-  const handleLogin = () => {
-    if (username.trim() !== "" && password.trim() !== "") {
-      setLoggedIn(true);
+      const data = await res.json();
+
+      if (data.error) {
+        alert("Invalid credentials");
+        return;
+      }
+
+      setUser(data);
+
+      // Parent Dashboard Auto Load
+      if (data.role === "parent") {
+        const chatRes = await fetch(
+          `${API_URL}/chat?user_id=${data.id}&role=parent`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              query: "show my marks",
+            }),
+          }
+        );
+
+        const chatData = await chatRes.json();
+
+        setStudents(chatData.students || []);
+
+        setMessages([
+          {
+            sender: "Bot",
+            text: chatData.response,
+          },
+        ]);
+      }
+
+      // Student Dashboard
+      else {
+        const chatRes = await fetch(
+          `${API_URL}/chat?user_id=${data.id}&role=student`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              query: "show my marks",
+            }),
+          }
+        );
+
+        const chatData = await chatRes.json();
+
+        setStudents(chatData.students || []);
+
+        setMessages([
+          {
+            sender: "Bot",
+            text: chatData.response,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Backend not responding");
     }
   };
 
-  // CHAT API
+  // ---------------- CHAT ----------------
   const sendMessage = async () => {
-    if (query.trim() === "") return;
+    if (!query) return;
 
     const userMessage = {
-      sender: username,
+      sender: "You",
       text: query,
     };
 
     setMessages((prev) => [...prev, userMessage]);
 
-    setQuery("");
-
     try {
       const res = await fetch(
-        "https://multilingual-school-chatbot-nl-sql-rag.onrender.com/chat",
+        `${API_URL}/chat?user_id=${user.id}&role=${user.role}`,
         {
           method: "POST",
           headers: {
@@ -60,34 +124,55 @@ export default function App() {
 
       const data = await res.json();
 
-      const botMessage = {
-        sender: "Bot",
-        text: data.response,
-      };
-
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
       setMessages((prev) => [
         ...prev,
         {
           sender: "Bot",
-          text: "⚠️ Server not responding.",
+          text: data.response,
+        },
+      ]);
+
+      if (data.students) {
+        setStudents(data.students);
+      }
+    } catch (err) {
+      console.error(err);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "Bot",
+          text: "⚠️ Backend server not responding",
         },
       ]);
     }
+
+    setQuery("");
   };
 
-  // LOGIN PAGE
-  if (!loggedIn) {
+  // ---------------- LOGOUT ----------------
+  const logout = () => {
+    setUser(null);
+    setStudents([]);
+    setMessages([
+      {
+        sender: "Bot",
+        text: "Hello 👋 Ask me about marks, assignments or timetable.",
+      },
+    ]);
+  };
+
+  // ---------------- LOGIN PAGE ----------------
+  if (!user) {
     return (
       <div
         style={{
-          height: "100vh",
+          minHeight: "100vh",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          background:
-            "linear-gradient(135deg, #0f172a, #111827, #1e3a8a)",
+          background: "linear-gradient(to right, #0f172a, #1e3a8a)",
+          color: "white",
           fontFamily: "Arial",
         }}
       >
@@ -95,35 +180,31 @@ export default function App() {
           style={{
             width: "380px",
             padding: "40px",
-            borderRadius: "24px",
+            borderRadius: "20px",
             background: "rgba(255,255,255,0.08)",
             backdropFilter: "blur(10px)",
-            border: "1px solid rgba(255,255,255,0.1)",
             boxShadow: "0 0 30px rgba(0,0,0,0.3)",
           }}
         >
           <h1
             style={{
-              color: "white",
               textAlign: "center",
               marginBottom: "10px",
-              fontSize: "32px",
             }}
           >
-            🎓 EduAI
+            🎓 EduAI Portal
           </h1>
 
           <p
             style={{
-              color: "#cbd5e1",
               textAlign: "center",
+              opacity: 0.8,
               marginBottom: "30px",
             }}
           >
-            Smart School Assistant
+            AI Powered School Assistant
           </p>
 
-          {/* USERNAME */}
           <input
             type="text"
             placeholder="Username"
@@ -132,17 +213,16 @@ export default function App() {
             style={{
               width: "100%",
               padding: "14px",
-              marginBottom: "18px",
-              borderRadius: "12px",
-              border: "1px solid rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.08)",
-              color: "white",
-              fontSize: "16px",
+              marginBottom: "15px",
+              borderRadius: "10px",
+              border: "none",
               outline: "none",
+              fontSize: "16px",
+              background: "rgba(255,255,255,0.15)",
+              color: "white",
             }}
           />
 
-          {/* PASSWORD */}
           <input
             type="password"
             placeholder="Password"
@@ -151,26 +231,24 @@ export default function App() {
             style={{
               width: "100%",
               padding: "14px",
-              marginBottom: "22px",
-              borderRadius: "12px",
-              border: "1px solid rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.08)",
-              color: "white",
-              fontSize: "16px",
+              marginBottom: "20px",
+              borderRadius: "10px",
+              border: "none",
               outline: "none",
+              fontSize: "16px",
+              background: "rgba(255,255,255,0.15)",
+              color: "white",
             }}
           />
 
-          {/* LOGIN BUTTON */}
           <button
             onClick={handleLogin}
             style={{
               width: "100%",
               padding: "14px",
+              borderRadius: "10px",
               border: "none",
-              borderRadius: "12px",
-              background:
-                "linear-gradient(135deg, #2563eb, #3b82f6)",
+              background: "#2563eb",
               color: "white",
               fontSize: "16px",
               cursor: "pointer",
@@ -179,114 +257,89 @@ export default function App() {
           >
             Login
           </button>
+
+          <div
+            style={{
+              marginTop: "25px",
+              fontSize: "14px",
+              opacity: 0.8,
+            }}
+          >
+            <p>Demo Credentials:</p>
+            <p>Parent → rajesh / 123</p>
+            <p>Student → rahul / 123</p>
+          </div>
         </div>
       </div>
     );
   }
 
-  // MAIN PAGE
+  // ---------------- MAIN DASHBOARD ----------------
   return (
     <div
       style={{
-        height: "100vh",
+        minHeight: "100vh",
         display: "flex",
-        background:
-          "linear-gradient(135deg, #0f172a, #111827, #1e3a8a)",
+        background: "linear-gradient(to right, #020617, #1e3a8a)",
+        color: "white",
         fontFamily: "Arial",
       }}
     >
       {/* SIDEBAR */}
       <div
         style={{
-          width: "280px",
+          width: "320px",
           background: "rgba(255,255,255,0.06)",
-          backdropFilter: "blur(12px)",
-          borderRight: "1px solid rgba(255,255,255,0.1)",
           padding: "25px",
-          color: "white",
+          borderRight: "1px solid rgba(255,255,255,0.1)",
         }}
       >
-        <h2 style={{ marginBottom: "25px" }}>
-          🎓 EduAI Dashboard
+        <h2 style={{ marginBottom: "30px" }}>
+          📊 EduAI Dashboard
         </h2>
 
-        {/* PROFILE CARD */}
-        <div
-          style={{
-            background: "rgba(255,255,255,0.08)",
-            padding: "20px",
-            borderRadius: "18px",
-            marginBottom: "25px",
-          }}
-        >
-          <h3>{student.name}</h3>
-          <p style={{ color: "#cbd5e1" }}>
-            Class: {student.class}
-          </p>
-        </div>
-
-        {/* DASHBOARD CARDS */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "15px",
-          }}
-        >
+        {students.map((student, index) => (
           <div
+            key={index}
             style={{
-              background: "#2563eb",
-              padding: "18px",
-              borderRadius: "16px",
+              background: "rgba(255,255,255,0.1)",
+              padding: "20px",
+              borderRadius: "18px",
+              marginBottom: "20px",
             }}
           >
-            <h4>📚 Attendance</h4>
-            <h2>{student.attendance}</h2>
-          </div>
+            <h3>{student.name}</h3>
 
-          <div
-            style={{
-              background: "#16a34a",
-              padding: "18px",
-              borderRadius: "16px",
-            }}
-          >
-            <h4>📝 Average Marks</h4>
-            <h2>{student.marks}</h2>
+            <p
+              style={{
+                opacity: 0.8,
+              }}
+            >
+              Class: {student.class}
+            </p>
           </div>
+        ))}
 
-          <div
-            style={{
-              background: "#ea580c",
-              padding: "18px",
-              borderRadius: "16px",
-            }}
-          >
-            <h4>📌 Assignments</h4>
-            <h2>{student.assignments}</h2>
-          </div>
-        </div>
-
-        {/* LOGOUT */}
         <button
-          onClick={() => setLoggedIn(false)}
+          onClick={logout}
           style={{
-            marginTop: "30px",
             width: "100%",
-            padding: "12px",
+            marginTop: "20px",
+            padding: "14px",
             border: "none",
             borderRadius: "12px",
             background: "#ef4444",
             color: "white",
-            cursor: "pointer",
+            fontSize: "16px",
             fontWeight: "bold",
+            cursor: "pointer",
           }}
         >
           Logout
         </button>
       </div>
 
-      {/* MAIN CHAT */}
+      {/* CHAT AREA */}
       <div
         style={{
           flex: 1,
@@ -294,25 +347,31 @@ export default function App() {
           flexDirection: "column",
         }}
       >
-        {/* HEADER */}
+        {/* TOP BAR */}
         <div
           style={{
-            padding: "20px 30px",
-            color: "white",
+            padding: "20px",
             borderBottom: "1px solid rgba(255,255,255,0.1)",
-            background: "rgba(255,255,255,0.05)",
-            backdropFilter: "blur(10px)",
+            background: "rgba(255,255,255,0.03)",
           }}
         >
           <h2>🤖 AI School Chatbot</h2>
+
+          <p
+            style={{
+              opacity: 0.8,
+            }}
+          >
+            Logged in as: {user.role}
+          </p>
         </div>
 
-        {/* CHAT AREA */}
+        {/* CHAT MESSAGES */}
         <div
           style={{
             flex: 1,
-            padding: "25px",
             overflowY: "auto",
+            padding: "30px",
           }}
         >
           {messages.map((msg, index) => (
@@ -321,28 +380,28 @@ export default function App() {
               style={{
                 display: "flex",
                 justifyContent:
-                  msg.sender === username
+                  msg.sender === "You"
                     ? "flex-end"
                     : "flex-start",
-                marginBottom: "18px",
+                marginBottom: "20px",
               }}
             >
               <div
                 style={{
-                  padding: "14px 18px",
+                  background:
+                    msg.sender === "You"
+                      ? "#2563eb"
+                      : "rgba(255,255,255,0.1)",
+                  padding: "18px",
                   borderRadius: "18px",
                   maxWidth: "70%",
-                  background:
-                    msg.sender === username
-                      ? "linear-gradient(135deg, #2563eb, #3b82f6)"
-                      : "rgba(255,255,255,0.08)",
-                  color: "white",
-                  backdropFilter: "blur(8px)",
+                  whiteSpace: "pre-line",
+                  lineHeight: "1.6",
                 }}
               >
-                <strong>{msg.sender}: </strong>
+                <strong>{msg.sender}:</strong>
 
-                <div style={{ marginTop: "6px" }}>
+                <div style={{ marginTop: "8px" }}>
                   {msg.text}
                 </div>
               </div>
@@ -355,44 +414,39 @@ export default function App() {
           style={{
             padding: "20px",
             display: "flex",
-            gap: "12px",
-            background: "rgba(255,255,255,0.05)",
+            gap: "10px",
             borderTop: "1px solid rgba(255,255,255,0.1)",
+            background: "rgba(255,255,255,0.03)",
           }}
         >
           <input
             type="text"
-            placeholder="Ask something..."
+            placeholder="Ask about marks, timetable, assignments..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                sendMessage();
-              }
-            }}
             style={{
               flex: 1,
-              padding: "14px",
-              borderRadius: "14px",
-              border: "1px solid rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.08)",
-              color: "white",
-              fontSize: "16px",
+              padding: "15px",
+              borderRadius: "12px",
+              border: "none",
               outline: "none",
+              fontSize: "16px",
+              background: "rgba(255,255,255,0.1)",
+              color: "white",
             }}
           />
 
           <button
             onClick={sendMessage}
             style={{
-              padding: "14px 24px",
+              padding: "15px 30px",
+              borderRadius: "12px",
               border: "none",
-              borderRadius: "14px",
-              background:
-                "linear-gradient(135deg, #2563eb, #3b82f6)",
+              background: "#2563eb",
               color: "white",
-              cursor: "pointer",
+              fontSize: "16px",
               fontWeight: "bold",
+              cursor: "pointer",
             }}
           >
             Send
