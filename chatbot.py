@@ -10,75 +10,18 @@ def remove_duplicates(data):
     return list(dict.fromkeys(data))
 
 
-# ---------------- INTENT DETECTION ----------------
-def detect_intent(query):
+# ---------------- CHATBOT ----------------
+def chatbot(query, role, students):
 
-    query = query.lower()
+    conn = connect_db()
+    cursor = conn.cursor()
 
-    # MARKS / PERFORMANCE
-    marks_keywords = [
-        "marks",
-        "score",
-        "scores",
-        "result",
-        "results",
-        "performance",
-        "report card",
-        "grades",
-        "academically",
-        "perform",
-        "exam"
-    ]
+    query = query.lower().strip()
 
-    # PREVIOUS EXAMS
-    previous_keywords = [
-        "previous",
-        "past",
-        "old",
-        "last exam",
-        "previous exam"
-    ]
+    response = ""
 
-    # ASSIGNMENTS
-    assignment_keywords = [
-        "assignment",
-        "homework",
-        "pending",
-        "project",
-        "task",
-        "work"
-    ]
-
-    # TIMETABLE
-    timetable_keywords = [
-        "timetable",
-        "schedule",
-        "class timing",
-        "routine",
-        "period",
-        "timing",
-        "class"
-    ]
-
-    if any(word in query for word in previous_keywords):
-        return "previous"
-
-    elif any(word in query for word in marks_keywords):
-        return "marks"
-
-    elif any(word in query for word in assignment_keywords):
-        return "assignment"
-
-    elif any(word in query for word in timetable_keywords):
-        return "timetable"
-
-    return "unknown"
-
-
-# ---------------- SUBJECT DETECTION ----------------
-def detect_subject(query):
-
-    query = query.lower()
+    # ---------------- SUBJECT DETECTION ----------------
+    subject_filter = None
 
     subjects = [
         "maths",
@@ -87,167 +30,141 @@ def detect_subject(query):
         "evs"
     ]
 
-    for subject in subjects:
-        if subject in query:
-            return subject.title()
+    for sub in subjects:
+        if sub in query:
+            subject_filter = sub.capitalize()
 
-    return None
+    # ---------------- INTENT DETECTION ----------------
 
+    marks_keywords = [
+        "marks",
+        "score",
+        "report card",
+        "performance",
+        "academically",
+        "how did i perform",
+        "result",
+        "exam",
+        "grades",
+    ]
 
-# ---------------- EXAM DETECTION ----------------
-def detect_exam(query):
+    previous_keywords = [
+        "previous",
+        "old",
+        "past",
+        "earlier",
+        "last exam",
+        "previous exam",
+        "old exam",
+        "previous result",
+    ]
 
-    query = query.lower()
+    assignment_keywords = [
+        "assignment",
+        "homework",
+        "pending",
+        "project",
+        "task",
+        "work",
+    ]
 
-    if "unit test" in query:
-        return "Unit Test"
+    timetable_keywords = [
+        "timetable",
+        "schedule",
+        "class",
+        "period",
+        "routine",
+        "timing",
+    ]
 
-    elif "midterm" in query:
-        return "Midterm"
+    maths_class_keywords = [
+        "when is my maths class",
+        "maths class",
+        "science class",
+        "english class",
+        "evs class",
+    ]
 
-    elif "final" in query:
-        return "Final"
+    # =====================================================
+    # SUBJECT CLASS QUERY
+    # =====================================================
 
-    return None
+    if any(word in query for word in maths_class_keywords):
 
-
-# ---------------- CHATBOT ----------------
-def chatbot(query, role, students):
-
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    intent = detect_intent(query)
-
-    subject_filter = detect_subject(query)
-    exam_filter = detect_exam(query)
-
-    response = ""
-
-    # ==================================================
-    # MARKS / PERFORMANCE
-    # ==================================================
-    if intent == "marks":
-
-        response = "📊 Academic Performance:\n"
+        response = "📅 Subject Schedule:\n"
 
         for s in students:
 
-            sql = """
-            SELECT subject, marks, exam
-            FROM marks
-            WHERE student_id=?
-            """
+            if not subject_filter:
+                continue
 
-            params = [s["id"]]
+            cursor.execute(
+                """
+                SELECT day, time
+                FROM timetable
+                WHERE class=? AND subject=?
+                """,
+                (s["class"], subject_filter)
+            )
 
-            # SUBJECT FILTER
-            if subject_filter:
-                sql += " AND subject=?"
-                params.append(subject_filter)
+            result = cursor.fetchone()
 
-            # EXAM FILTER
-            if exam_filter:
-                sql += " AND exam=?"
-                params.append(exam_filter)
-
-            sql += """
-            ORDER BY
-            CASE exam
-                WHEN 'Unit Test' THEN 1
-                WHEN 'Midterm' THEN 2
-                WHEN 'Final' THEN 3
-            END
-            """
-
-            cursor.execute(sql, tuple(params))
-
-            marks = cursor.fetchall()
-
-            if marks:
-
-                response += f"\n{s['name']}:\n"
-
-                total = 0
-
-                marks_list = []
-
-                for m in marks:
-
-                    marks_list.append(
-                        f"• {m[2]} | {m[0]}: {m[1]} marks"
-                    )
-
-                    total += m[1]
-
-                marks_list = remove_duplicates(marks_list)
-
-                response += "\n".join(marks_list)
-
-                avg = round(total / len(marks), 1)
-
-                highest = max(marks, key=lambda x: x[1])
-                lowest = min(marks, key=lambda x: x[1])
-
-                response += f"\n\n⭐ Average Score: {avg}%\n"
-
-                if avg >= 90:
-                    response += "Excellent academic performance.\n"
-
-                elif avg >= 75:
-                    response += "Good and consistent performance.\n"
-
-                else:
-                    response += "Needs improvement in some subjects.\n"
+            if result:
 
                 response += (
-                    f"🏆 Strongest Subject: "
-                    f"{highest[0]} ({highest[1]} marks)\n"
-                )
-
-                response += (
-                    f"📘 Focus Area: "
-                    f"{lowest[0]} ({lowest[1]} marks)\n"
+                    f"\n{s['name']}:\n"
+                    f"• {subject_filter} class is on "
+                    f"{result[0]} at {result[1]}\n"
                 )
 
             else:
-                response += f"\n{s['name']}: No marks found\n"
+                response += (
+                    f"\n{s['name']}:\n"
+                    f"No {subject_filter} class found\n"
+                )
 
-    # ==================================================
-    # PREVIOUS EXAMS
-    # ==================================================
-    elif intent == "previous":
+    # =====================================================
+    # PREVIOUS EXAM RESULTS
+    # =====================================================
+
+    elif any(word in query for word in previous_keywords):
 
         response = "📚 Previous Exam Results:\n"
 
         for s in students:
 
-            sql = """
-            SELECT subject, marks, exam
-            FROM marks
-            WHERE student_id=?
-            AND exam != 'Final'
-            """
-
-            params = [s["id"]]
-
             if subject_filter:
-                sql += " AND subject=?"
-                params.append(subject_filter)
+                cursor.execute(
+                    """
+                    SELECT exam, subject, marks
+                    FROM marks
+                    WHERE student_id=? AND subject=?
+                    AND exam!='Final'
+                    ORDER BY
+                    CASE exam
+                        WHEN 'Unit Test' THEN 1
+                        WHEN 'Midterm' THEN 2
+                        ELSE 3
+                    END
+                    """,
+                    (s["id"], subject_filter)
+                )
 
-            if exam_filter:
-                sql += " AND exam=?"
-                params.append(exam_filter)
-
-            sql += """
-            ORDER BY
-            CASE exam
-                WHEN 'Unit Test' THEN 1
-                WHEN 'Midterm' THEN 2
-            END
-            """
-
-            cursor.execute(sql, tuple(params))
+            else:
+                cursor.execute(
+                    """
+                    SELECT exam, subject, marks
+                    FROM marks
+                    WHERE student_id=? AND exam!='Final'
+                    ORDER BY
+                    CASE exam
+                        WHEN 'Unit Test' THEN 1
+                        WHEN 'Midterm' THEN 2
+                        ELSE 3
+                    END
+                    """,
+                    (s["id"],)
+                )
 
             marks = cursor.fetchall()
 
@@ -260,11 +177,12 @@ def chatbot(query, role, students):
                 for m in marks:
 
                     response += (
-                        f"• {m[2]} | "
-                        f"{m[0]}: {m[1]} marks\n"
+                        f"• {m[0]} | "
+                        f"{m[1]}: "
+                        f"{m[2]} marks\n"
                     )
 
-                    total += m[1]
+                    total += m[2]
 
                 avg = round(total / len(marks), 1)
 
@@ -279,25 +197,173 @@ def chatbot(query, role, students):
                     f"No previous exam records found\n"
                 )
 
-    # ==================================================
-    # ASSIGNMENTS
-    # ==================================================
-    elif intent == "assignment":
+    # =====================================================
+    # MARKS / PERFORMANCE
+    # =====================================================
 
-        response = "📝 Pending Assignments:\n"
+    elif any(word in query for word in marks_keywords):
 
-        total_assignments = 0
+        response = "📊 Academic Performance:\n"
 
         for s in students:
 
-            cursor.execute(
-                """
-                SELECT subject, assignment, due_date
-                FROM assignments
-                WHERE class=?
-                """,
-                (s["class"],)
-            )
+            if subject_filter:
+                cursor.execute(
+                    """
+                    SELECT exam, subject, marks
+                    FROM marks
+                    WHERE student_id=? AND subject=?
+                    ORDER BY
+                    CASE exam
+                        WHEN 'Unit Test' THEN 1
+                        WHEN 'Midterm' THEN 2
+                        WHEN 'Final' THEN 3
+                    END
+                    """,
+                    (s["id"], subject_filter)
+                )
+
+            else:
+                cursor.execute(
+                    """
+                    SELECT exam, subject, marks
+                    FROM marks
+                    WHERE student_id=?
+                    ORDER BY
+                    CASE exam
+                        WHEN 'Unit Test' THEN 1
+                        WHEN 'Midterm' THEN 2
+                        WHEN 'Final' THEN 3
+                    END
+                    """,
+                    (s["id"],)
+                )
+
+            marks = cursor.fetchall()
+
+            if marks:
+
+                response += f"\n{s['name']}:\n"
+
+                total = 0
+
+                all_marks = []
+
+                for m in marks:
+
+                    response += (
+                        f"• {m[0]} | "
+                        f"{m[1]}: "
+                        f"{m[2]} marks\n"
+                    )
+
+                    total += m[2]
+
+                    all_marks.append((m[2], m[1]))
+
+                avg = round(total / len(marks), 1)
+
+                highest = max(all_marks)
+
+                lowest = min(all_marks)
+
+                response += (
+                    f"\n⭐ Average Score: "
+                    f"{avg}%\n"
+                )
+
+                # PERFORMANCE MESSAGE
+                if avg >= 90:
+                    response += (
+                        "Outstanding academic performance.\n"
+                    )
+
+                elif avg >= 75:
+                    response += (
+                        "Good and consistent performance.\n"
+                    )
+
+                else:
+                    response += (
+                        "Needs improvement in some subjects.\n"
+                    )
+
+                # STRONGEST SUBJECT
+                response += (
+                    f"🏆 Strongest Subject: "
+                    f"{highest[1]} "
+                    f"({highest[0]} marks)\n"
+                )
+
+                # SMARTER FOCUS AREA
+                subjects_used = list(
+                    set([m[1] for m in all_marks])
+                )
+
+                if len(subjects_used) > 1:
+
+                    response += (
+                        f"📘 Focus Area: "
+                        f"{lowest[1]} "
+                        f"({lowest[0]} marks)"
+                    )
+
+                else:
+
+                    if avg >= 90:
+                        response += (
+                            "📈 Excellent consistency across exams."
+                        )
+
+                    elif avg >= 75:
+                        response += (
+                            "📈 Steady improvement observed."
+                        )
+
+                    else:
+                        response += (
+                            "📈 More revision can improve scores."
+                        )
+
+                response += "\n"
+
+            else:
+                response += (
+                    f"\n{s['name']}: "
+                    f"No marks found\n"
+                )
+
+    # =====================================================
+    # ASSIGNMENTS
+    # =====================================================
+
+    elif any(word in query for word in assignment_keywords):
+
+        response = "📝 Pending Assignments:\n"
+
+        for s in students:
+
+            if subject_filter:
+
+                cursor.execute(
+                    """
+                    SELECT subject, assignment, due_date
+                    FROM assignments
+                    WHERE class=? AND subject=?
+                    """,
+                    (s["class"], subject_filter)
+                )
+
+            else:
+
+                cursor.execute(
+                    """
+                    SELECT subject, assignment, due_date
+                    FROM assignments
+                    WHERE class=?
+                    """,
+                    (s["class"],)
+                )
 
             assignments = cursor.fetchall()
 
@@ -305,23 +371,18 @@ def chatbot(query, role, students):
 
                 response += f"\n{s['name']}:\n"
 
-                assign_list = []
-
                 for a in assignments:
 
-                    assign_list.append(
+                    response += (
                         f"• {a[0]}: "
                         f"{a[1]} "
-                        f"(Due: {a[2]})"
+                        f"(Due: {a[2]})\n"
                     )
 
-                assign_list = remove_duplicates(assign_list)
-
-                total_assignments += len(assign_list)
-
-                response += "\n".join(assign_list)
-
-                response += "\n"
+                response += (
+                    f"\n📌 Total Assignments: "
+                    f"{len(assignments)}\n"
+                )
 
             else:
                 response += (
@@ -329,33 +390,37 @@ def chatbot(query, role, students):
                     f"No assignments found\n"
                 )
 
-        response += (
-            f"\n📌 Total Assignments: "
-            f"{total_assignments}"
-        )
-
-    # ==================================================
+    # =====================================================
     # TIMETABLE
-    # ==================================================
-    elif intent == "timetable":
+    # =====================================================
+
+    elif any(word in query for word in timetable_keywords):
 
         response = "📅 Class Schedule:\n"
 
         for s in students:
 
-            sql = """
-            SELECT subject, time, day
-            FROM timetable
-            WHERE class=?
-            """
-
-            params = [s["class"]]
-
             if subject_filter:
-                sql += " AND subject=?"
-                params.append(subject_filter)
 
-            cursor.execute(sql, tuple(params))
+                cursor.execute(
+                    """
+                    SELECT day, subject, time
+                    FROM timetable
+                    WHERE class=? AND subject=?
+                    """,
+                    (s["class"], subject_filter)
+                )
+
+            else:
+
+                cursor.execute(
+                    """
+                    SELECT day, subject, time
+                    FROM timetable
+                    WHERE class=?
+                    """,
+                    (s["class"],)
+                )
 
             timetable = cursor.fetchall()
 
@@ -363,19 +428,12 @@ def chatbot(query, role, students):
 
                 response += f"\n{s['name']}:\n"
 
-                time_list = []
-
                 for t in timetable:
 
-                    time_list.append(
-                        f"• {t[0]} at {t[1]} on {t[2]}"
+                    response += (
+                        f"• {t[0]} | "
+                        f"{t[1]} at {t[2]}\n"
                     )
-
-                time_list = remove_duplicates(time_list)
-
-                response += "\n".join(time_list)
-
-                response += "\n"
 
             else:
                 response += (
@@ -383,9 +441,10 @@ def chatbot(query, role, students):
                     f"No timetable found\n"
                 )
 
-    # ==================================================
-    # DEFAULT
-    # ==================================================
+    # =====================================================
+    # DEFAULT RESPONSE
+    # =====================================================
+
     else:
 
         response = (
@@ -397,7 +456,8 @@ def chatbot(query, role, students):
             "- Show my exam performance\n"
             "- What homework is pending?\n"
             "- Show class schedule\n"
-            "- Show my previous exam marks"
+            "- Show my previous exam marks\n"
+            "- When is my Maths class?"
         )
 
     conn.close()
