@@ -143,7 +143,7 @@ function App() {
   // ---------------- LOGIN SCREEN ----------------
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#081028] via-[#0f172a] to-[#111827] flex items-center justify-center px-4 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-[#081028] via-[#0f172a] to-[#111827] flex items-center justify-center px-6 relative overflow-hidden">
 
         {/* Glow Effects */}
         <div className="absolute w-[500px] h-[500px] bg-blue-500 opacity-20 blur-3xl rounded-full top-[-100px] left-[-100px]" />
@@ -151,21 +151,21 @@ function App() {
         <div className="absolute w-[400px] h-[400px] bg-indigo-500 opacity-20 blur-3xl rounded-full bottom-[-100px] right-[-100px]" />
 
         {/* Login Card */}
-        <div className="bg-[#111827]/90 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-3xl w-full max-w-md shadow-2xl z-10">
+        <div className="bg-[#111827]/90 backdrop-blur-xl border border-white/10 p-10 rounded-3xl w-full max-w-md shadow-2xl z-10">
 
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
             <img
               src={botImage}
               alt="bot"
-              className="w-20 h-20 md:w-24 md:h-24 rounded-full shadow-2xl mb-5"
+              className="w-24 h-24 rounded-full shadow-2xl mb-5"
             />
 
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+            <h1 className="text-4xl font-bold text-white mb-2">
               EduAI Portal
             </h1>
 
-            <p className="text-gray-400 text-center text-sm md:text-base">
+            <p className="text-gray-400 text-center">
               Intelligent Academic Assistant
             </p>
           </div>
@@ -205,126 +205,106 @@ function App() {
     );
   }
 
-  // ---------------- QUICK SUGGESTIONS ----------------
-  const quickSuggestions = [
-    "Show my marks",
-    "Show unit test marks",
-    "Show midterm marks",
-    "Show final result",
-    "Show my rank",
-    "My improvement area",
-    "Performance analysis",
-    "Show assignments",
-    "Pending homework",
-    "Show timetable",
-    "When is my Maths class?"
-  ];
-
   // ---------------- MAIN DASHBOARD ----------------
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#081028] via-[#0f172a] to-[#172554] text-white flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-gradient-to-br from-[#081028] via-[#0f172a] to-[#172554] text-white flex">
 
       {/* SIDEBAR */}
-      <div className="w-full lg:w-[320px] bg-[#0f172a]/90 lg:border-r border-white/10 p-5 lg:p-6 flex flex-col justify-between">
+      <div className="w-[340px] min-w-[340px] bg-[#0f172a]/90 border-r border-white/10 p-6 flex flex-col justify-between">
 
         <div>
 
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl lg:text-3xl font-bold tracking-tight text-white">
+          <div className="mb-10">
+            <h1 className="text-5xl font-bold tracking-tight text-white leading-tight">
               EduAI Dashboard
             </h1>
 
-            <p className="text-base lg:text-sm text-slate-400 mt-2">
+            <p className="text-lg text-slate-400 mt-3">
               Intelligent Student Workspace
             </p>
           </div>
 
           {/* STUDENT CARDS */}
-          <div className="space-y-4">
+          <div className="space-y-5">
 
             {students.map((student) => (
               <div
                 key={student.id}
-                className="bg-[#1e293b] p-5 rounded-3xl border border-white/10 shadow-lg"
+                className="bg-[#1e293b] p-6 rounded-3xl border border-white/10 shadow-xl"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-5">
 
-                  <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-2xl font-bold shadow-md">
+                  {/* Student Icon */}
+                  <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-3xl font-bold shadow-md">
                     {student.name[0]}
                   </div>
 
+                  {/* Student Info */}
                   <div>
-                    <h2 className="text-2xl lg:text-[18px] font-semibold">
+                    <h2 className="text-3xl font-semibold">
                       {student.name}
                     </h2>
 
-                    <p className="text-gray-400 text-lg lg:text-sm">
+                    <p className="text-gray-400 text-2xl mt-1">
                       Class {student.class}
                     </p>
                   </div>
-
                 </div>
               </div>
             ))}
 
           </div>
 
-          {/* INSIGHT */}
-          <div className="mt-8">
+          {/* INSIGHTS + SUGGESTIONS */}
+          <div className="mt-8 space-y-5">
 
-            <div className="bg-[#1e293b] border border-white/10 rounded-3xl p-6 shadow-lg">
+            {/* Quote Card */}
+            <div className="bg-[#1e293b] border border-white/10 rounded-3xl p-8 shadow-xl">
 
-              <p className="text-lg lg:text-sm italic text-slate-300 leading-relaxed">
+              <p className="text-2xl italic text-slate-300 leading-relaxed">
                 “{randomInsight}”
               </p>
 
-              <div className="mt-4 text-sm text-slate-500">
+              <div className="mt-5 text-lg text-slate-500">
                 Daily Learning Insight
               </div>
             </div>
 
-          </div>
+            {/* QUICK COMMANDS */}
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 shadow-2xl overflow-hidden">
 
-          {/* QUICK SUGGESTIONS */}
-          <div className="mt-8 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 shadow-xl overflow-hidden">
+              <h3 className="font-bold text-white text-4xl mb-8">
+                Quick Suggestions
+              </h3>
 
-            <h3 className="font-semibold text-white mb-5 text-2xl lg:text-lg">
-              Quick Suggestions
-            </h3>
+              <div className="flex flex-wrap gap-4">
 
-            {/* Desktop Grid */}
-            <div className="hidden lg:flex flex-wrap gap-2">
+                {[
+                  "Show my marks",
+                  "Show unit test marks",
+                  "Show midterm marks",
+                  "Show final result",
+                  "Show my rank",
+                  "My improvement area",
+                  "Performance analysis",
+                  "Show assignments",
+                  "Pending homework",
+                  "Show timetable",
+                  "When is my Maths class?"
+                ].map((item, index) => (
 
-              {quickSuggestions.map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={() => sendMessage(item)}
+                    className="text-lg bg-white/15 hover:bg-white/25 transition-all px-6 py-4 rounded-full text-white border border-white/10 whitespace-nowrap"
+                  >
+                    {item}
+                  </button>
 
-                <button
-                  key={index}
-                  onClick={() => sendMessage(item)}
-                  className="text-xs bg-white/15 hover:bg-white/25 transition-all px-3 py-2 rounded-full text-white border border-white/10"
-                >
-                  {item}
-                </button>
+                ))}
 
-              ))}
-
-            </div>
-
-            {/* Mobile Horizontal Scroll */}
-            <div className="flex lg:hidden gap-3 overflow-x-auto pb-2 scrollbar-hide">
-
-              {quickSuggestions.map((item, index) => (
-
-                <button
-                  key={index}
-                  onClick={() => sendMessage(item)}
-                  className="whitespace-nowrap text-base bg-white/15 hover:bg-white/25 transition-all px-5 py-3 rounded-full text-white border border-white/10 shrink-0"
-                >
-                  {item}
-                </button>
-
-              ))}
-
+              </div>
             </div>
 
           </div>
@@ -337,32 +317,32 @@ function App() {
             setStudents([]);
             setMessages([]);
           }}
-          className="mt-8 bg-red-500 hover:bg-red-600 transition-all py-4 rounded-2xl font-semibold shadow-lg text-lg"
+          className="mt-10 bg-red-500 hover:bg-red-600 transition-all py-5 rounded-2xl font-semibold shadow-lg text-2xl"
         >
           Logout
         </button>
       </div>
 
       {/* MAIN CHAT AREA */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col">
 
         {/* TOP BAR */}
-        <div className="p-5 lg:p-6 border-b border-white/10 bg-[#0f172a]/70 backdrop-blur-lg">
+        <div className="p-8 border-b border-white/10 bg-[#0f172a]/70 backdrop-blur-lg">
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
 
             <img
               src={botImage}
               alt="bot"
-              className="w-14 h-14 rounded-full shadow-lg"
+              className="w-20 h-20 rounded-full shadow-lg"
             />
 
             <div>
-              <h1 className="text-3xl lg:text-2xl font-bold">
+              <h1 className="text-5xl font-bold">
                 EduAI Assistant
               </h1>
 
-              <p className="text-gray-400 text-base lg:text-sm">
+              <p className="text-gray-400 text-2xl mt-2">
                 Smart Academic Support System
               </p>
             </div>
@@ -371,8 +351,9 @@ function App() {
         </div>
 
         {/* CHAT AREA */}
-        <div className="flex-1 overflow-y-auto p-5 lg:p-8 space-y-6">
+        <div className="flex-1 overflow-y-auto p-8 space-y-8">
 
+          {/* CHAT MESSAGES */}
           {messages.map((msg, index) => (
             <div
               key={index}
@@ -384,40 +365,36 @@ function App() {
             >
 
               {msg.sender === "bot" ? (
-
-                <div className="flex gap-3 items-start max-w-[95%] lg:max-w-[75%]">
+                <div className="flex gap-4 items-start max-w-[75%]">
 
                   <img
                     src={botImage}
                     alt="bot"
-                    className="w-10 h-10 rounded-full shadow-md"
+                    className="w-14 h-14 rounded-full shadow-md"
                   />
 
-                  <div className="bg-[#1e293b] p-5 rounded-3xl whitespace-pre-line border border-white/10 shadow-lg text-lg lg:text-base leading-relaxed">
+                  <div className="bg-[#1e293b] p-6 rounded-3xl whitespace-pre-line border border-white/10 shadow-lg text-2xl leading-relaxed">
                     {msg.text}
                   </div>
                 </div>
-
               ) : (
-
-                <div className="bg-blue-600 p-5 rounded-3xl max-w-[90%] lg:max-w-[75%] shadow-lg whitespace-pre-line text-lg lg:text-base">
+                <div className="bg-blue-600 p-6 rounded-3xl max-w-[75%] shadow-lg whitespace-pre-line text-2xl leading-relaxed">
                   {msg.text}
                 </div>
-
               )}
 
             </div>
           ))}
 
           {loading && (
-            <div className="text-gray-400 text-lg">
+            <div className="text-gray-400 text-xl">
               Thinking...
             </div>
           )}
         </div>
 
         {/* INPUT BAR */}
-        <div className="p-4 lg:p-6 border-t border-white/10 bg-[#0f172a]/80 backdrop-blur-lg flex gap-3 sticky bottom-0">
+        <div className="p-6 border-t border-white/10 bg-[#0f172a]/80 backdrop-blur-lg flex gap-4">
 
           <input
             type="text"
@@ -429,12 +406,12 @@ function App() {
             onKeyDown={(e) =>
               e.key === "Enter" && sendMessage()
             }
-            className="flex-1 bg-[#1e293b] text-white p-4 rounded-2xl outline-none border border-white/10 focus:border-blue-500 text-base"
+            className="flex-1 bg-[#1e293b] text-white p-5 rounded-3xl outline-none border border-white/10 focus:border-blue-500 text-xl"
           />
 
           <button
             onClick={() => sendMessage()}
-            className="bg-blue-600 hover:bg-blue-700 px-6 lg:px-8 rounded-2xl font-semibold transition-all shadow-lg text-base"
+            className="bg-blue-600 hover:bg-blue-700 px-10 rounded-3xl font-semibold transition-all shadow-lg text-xl"
           >
             Send
           </button>
