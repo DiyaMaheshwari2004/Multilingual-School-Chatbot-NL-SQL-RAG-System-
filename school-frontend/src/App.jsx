@@ -82,14 +82,16 @@ function App() {
   };
 
   // ---------------- SEND MESSAGE ----------------
-  const sendMessage = async () => {
-    if (!query.trim()) return;
+  const sendMessage = async (customQuery = null) => {
+    const finalQuery = customQuery || query;
+
+    if (!finalQuery.trim()) return;
 
     const updatedMessages = [
       ...messages,
       {
         sender: "user",
-        text: query,
+        text: finalQuery,
       },
     ];
 
@@ -106,7 +108,7 @@ function App() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            query: query,
+            query: finalQuery,
           }),
         }
       );
@@ -149,21 +151,21 @@ function App() {
         <div className="absolute w-[400px] h-[400px] bg-indigo-500 opacity-20 blur-3xl rounded-full bottom-[-100px] right-[-100px]" />
 
         {/* Login Card */}
-        <div className="bg-[#111827]/90 backdrop-blur-xl border border-white/10 p-10 rounded-3xl w-full max-w-md shadow-2xl z-10">
+        <div className="bg-[#111827]/90 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-3xl w-full max-w-md shadow-2xl z-10">
 
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
             <img
               src={botImage}
               alt="bot"
-              className="w-24 h-24 rounded-full shadow-2xl mb-5"
+              className="w-20 h-20 md:w-24 md:h-24 rounded-full shadow-2xl mb-5"
             />
 
-            <h1 className="text-4xl font-bold text-white mb-2">
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
               EduAI Portal
             </h1>
 
-            <p className="text-gray-400 text-center">
+            <p className="text-gray-400 text-center text-sm md:text-base">
               Intelligent Academic Assistant
             </p>
           </div>
@@ -197,6 +199,7 @@ function App() {
             >
               Login
             </button>
+
           </div>
         </div>
       </div>
@@ -205,22 +208,24 @@ function App() {
 
   // ---------------- MAIN DASHBOARD ----------------
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#081028] via-[#0f172a] to-[#172554] text-white flex">
+    <div className="min-h-screen bg-gradient-to-br from-[#081028] via-[#0f172a] to-[#172554] text-white flex flex-col md:flex-row">
 
       {/* SIDEBAR */}
-      <div className="w-[320px] bg-[#0f172a]/90 border-r border-white/10 p-6 flex flex-col justify-between">
+      <div className="w-full md:w-[320px] bg-[#0f172a]/90 border-r border-white/10 p-4 md:p-6 flex flex-col justify-between">
 
         <div>
 
           {/* Header */}
-          <div className="mb-10">
-            <h1 className="text-3xl font-bold tracking-tight text-white">
+          <div className="mb-8 md:mb-10">
+
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
               EduAI Dashboard
             </h1>
 
             <p className="text-sm text-slate-400 mt-1">
               Intelligent Student Workspace
             </p>
+
           </div>
 
           {/* STUDENT CARDS */}
@@ -231,6 +236,7 @@ function App() {
                 key={student.id}
                 className="bg-[#1e293b] p-4 rounded-2xl border border-white/10 shadow-lg"
               >
+
                 <div className="flex items-center gap-4">
 
                   {/* Student Icon */}
@@ -240,6 +246,7 @@ function App() {
 
                   {/* Student Info */}
                   <div>
+
                     <h2 className="text-[16px] font-semibold">
                       {student.name}
                     </h2>
@@ -247,6 +254,7 @@ function App() {
                     <p className="text-gray-400 text-sm">
                       Class {student.class}
                     </p>
+
                   </div>
                 </div>
               </div>
@@ -254,10 +262,10 @@ function App() {
 
           </div>
 
-          {/* INSIGHTS + SUGGESTIONS */}
+          {/* INSIGHTS + QUICK SUGGESTIONS */}
           <div className="mt-8 space-y-4">
 
-            {/* Quote Card */}
+            {/* Insight Card */}
             <div className="bg-[#1e293b] border border-white/10 rounded-2xl p-5 shadow-lg">
 
               <p className="text-sm italic text-slate-300 leading-relaxed">
@@ -267,20 +275,40 @@ function App() {
               <div className="mt-3 text-xs text-slate-500">
                 Daily Learning Insight
               </div>
+
             </div>
 
-            {/* Suggestions */}
+            {/* QUICK COMMANDS */}
             <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 shadow-xl">
 
-              <h3 className="font-semibold text-white mb-3">
+              <h3 className="font-semibold text-white mb-4">
                 Quick Suggestions
               </h3>
 
-              <div className="space-y-2 text-sm text-blue-100">
-                <div>• Ask for subject-wise marks</div>
-                <div>• View upcoming assignments</div>
-                <div>• Check weekly timetable</div>
-                <div>• Track academic performance</div>
+              <div className="flex flex-wrap gap-2">
+
+                {[
+                  "Show my marks",
+                  "Show unit test marks",
+                  "Show midterm marks",
+                  "Show final result",
+                  "Show my rank",
+                  "My improvement area",
+                  "Performance analysis",
+                  "Show assignments",
+                  "Pending homework",
+                  "Show timetable",
+                  "When is my Maths class?"
+                ].map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={() => sendMessage(item)}
+                    className="text-xs bg-white/15 hover:bg-white/25 transition-all px-3 py-2 rounded-full text-white border border-white/10"
+                  >
+                    {item}
+                  </button>
+                ))}
+
               </div>
             </div>
 
@@ -298,37 +326,39 @@ function App() {
         >
           Logout
         </button>
+
       </div>
 
       {/* MAIN CHAT AREA */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
 
         {/* TOP BAR */}
-        <div className="p-6 border-b border-white/10 bg-[#0f172a]/70 backdrop-blur-lg">
+        <div className="p-4 md:p-6 border-b border-white/10 bg-[#0f172a]/70 backdrop-blur-lg">
 
           <div className="flex items-center gap-4">
 
             <img
               src={botImage}
               alt="bot"
-              className="w-14 h-14 rounded-full shadow-lg"
+              className="w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg"
             />
 
             <div>
-              <h1 className="text-2xl font-bold">
+
+              <h1 className="text-lg md:text-2xl font-bold">
                 EduAI Assistant
               </h1>
 
               <p className="text-gray-400 text-sm">
                 Smart Academic Support System
               </p>
-            </div>
 
+            </div>
           </div>
         </div>
 
         {/* CHAT AREA */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
 
           {/* CHAT MESSAGES */}
           {messages.map((msg, index) => (
@@ -342,22 +372,27 @@ function App() {
             >
 
               {msg.sender === "bot" ? (
-                <div className="flex gap-3 items-start max-w-[75%]">
+
+                <div className="flex gap-3 items-start max-w-[90%] md:max-w-[75%]">
 
                   <img
                     src={botImage}
                     alt="bot"
-                    className="w-10 h-10 rounded-full shadow-md"
+                    className="w-9 h-9 md:w-10 md:h-10 rounded-full shadow-md"
                   />
 
-                  <div className="bg-[#1e293b] p-5 rounded-2xl whitespace-pre-line border border-white/10 shadow-lg">
+                  <div className="bg-[#1e293b] p-4 md:p-5 rounded-2xl whitespace-pre-line border border-white/10 shadow-lg text-sm md:text-base">
                     {msg.text}
                   </div>
+
                 </div>
+
               ) : (
-                <div className="bg-blue-600 p-5 rounded-2xl max-w-[75%] shadow-lg whitespace-pre-line">
+
+                <div className="bg-blue-600 p-4 md:p-5 rounded-2xl max-w-[90%] md:max-w-[75%] shadow-lg whitespace-pre-line text-sm md:text-base">
                   {msg.text}
                 </div>
+
               )}
 
             </div>
@@ -368,10 +403,11 @@ function App() {
               Thinking...
             </div>
           )}
+
         </div>
 
         {/* INPUT BAR */}
-        <div className="p-6 border-t border-white/10 bg-[#0f172a]/80 backdrop-blur-lg flex gap-4">
+        <div className="p-4 md:p-6 border-t border-white/10 bg-[#0f172a]/80 backdrop-blur-lg flex gap-3">
 
           <input
             type="text"
@@ -383,12 +419,12 @@ function App() {
             onKeyDown={(e) =>
               e.key === "Enter" && sendMessage()
             }
-            className="flex-1 bg-[#1e293b] text-white p-4 rounded-2xl outline-none border border-white/10 focus:border-blue-500"
+            className="flex-1 bg-[#1e293b] text-white p-4 rounded-2xl outline-none border border-white/10 focus:border-blue-500 text-sm md:text-base"
           />
 
           <button
-            onClick={sendMessage}
-            className="bg-blue-600 hover:bg-blue-700 px-8 rounded-2xl font-semibold transition-all shadow-lg"
+            onClick={() => sendMessage()}
+            className="bg-blue-600 hover:bg-blue-700 px-5 md:px-8 rounded-2xl font-semibold transition-all shadow-lg"
           >
             Send
           </button>
