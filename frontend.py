@@ -1,354 +1,425 @@
-import streamlit as st
-import requests
-import random
+import { useState, useEffect } from "react";
+import botImage from "./assets/bot.png";
 
-API_URL = "https://multilingual-school-chatbot-nl-sql-rag.onrender.com"
+const API_URL =
+  "https://multilingual-school-chatbot-nl-sql-rag.onrender.com";
 
-# ---------------- PAGE CONFIG ----------------
-st.set_page_config(
-    page_title="EduAI Assistant",
-    page_icon="🎓",
-    layout="centered"
-)
+function App() {
+  const [user, setUser] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [query, setQuery] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-# ---------------- CUSTOM UI ----------------
-st.markdown("""
-<style>
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-.main {
-    background: linear-gradient(135deg, #0f172a, #111827);
-    color: white;
-}
+  // ---------------- INSIGHTS ----------------
+  const insights = [
+    "Consistency beats last-minute studying.",
+    "Reading daily improves memory retention.",
+    "Small progress every day leads to big achievements.",
+    "Revision is the key to long-term learning.",
+    "Focused study sessions improve productivity.",
+    "Learning is more effective when practiced regularly.",
+  ];
 
-/* Mobile Responsive */
-.block-container {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-    max-width: 900px;
-}
+  const [randomInsight, setRandomInsight] = useState("");
 
-.stTextInput > div > div > input {
-    background-color: #1e293b;
-    color: white;
-    border-radius: 10px;
-    border: 1px solid #334155;
-}
+  useEffect(() => {
+    const random =
+      insights[Math.floor(Math.random() * insights.length)];
 
-.stButton > button {
-    width: 100%;
-    border-radius: 10px;
-    border: none;
-    background: #2563eb;
-    color: white;
-    font-weight: 600;
-    padding: 0.6rem;
-    transition: 0.3s;
-}
+    setRandomInsight(random);
+  }, []);
 
-.stButton > button:hover {
-    background: #1d4ed8;
-}
+  // ---------------- LOGIN ----------------
+  const handleLogin = async () => {
+    try {
+      const res = await fetch(
+        `${API_URL}/login?username=${username}&password=${password}`,
+        {
+          method: "POST",
+        }
+      );
 
-.chat-user {
-    background: #2563eb;
-    padding: 14px;
-    border-radius: 14px;
-    margin-bottom: 12px;
-    color: white;
-    word-wrap: break-word;
-}
+      const data = await res.json();
 
-.chat-bot {
-    background: #1e293b;
-    padding: 14px;
-    border-radius: 14px;
-    margin-bottom: 12px;
-    color: white;
-    border: 1px solid #334155;
-    word-wrap: break-word;
-}
+      if (data.error) {
+        alert("Invalid credentials");
+        return;
+      }
 
-.quick-title {
-    font-size: 18px;
-    font-weight: 700;
-    margin-top: 15px;
-    margin-bottom: 10px;
-}
+      setUser(data);
 
-.insight-box {
-    background: linear-gradient(135deg, #1e3a8a, #312e81);
-    padding: 18px;
-    border-radius: 16px;
-    margin-bottom: 20px;
-    color: white;
-    border: 1px solid rgba(255,255,255,0.1);
-}
+      const chatRes = await fetch(
+        `${API_URL}/chat?user_id=${data.id}&role=${data.role}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: "hello",
+          }),
+        }
+      );
 
-.small-text {
-    color: #cbd5e1;
-    font-size: 14px;
-}
+      const chatData = await chatRes.json();
 
-/* Suggestions */
-.suggestion-box {
-    background: #1e293b;
-    padding: 10px;
-    border-radius: 12px;
-    border: 1px solid #334155;
-    margin-bottom: 8px;
-    text-align: center;
-    color: white;
-}
+      setStudents(chatData.students || []);
 
-/* Mobile */
-@media (max-width: 768px) {
+      setMessages([
+        {
+          sender: "bot",
+          text:
+            "Welcome to EduAI Assistant.\n\nYou can ask about:\n• Marks\n• Assignments\n• Timetable",
+        },
+      ]);
+    } catch (err) {
+      alert("Backend not responding");
+    }
+  };
 
-    .block-container {
-        padding-left: 1rem;
-        padding-right: 1rem;
+  // ---------------- SEND MESSAGE ----------------
+  const sendMessage = async (customQuery = null) => {
+    const finalQuery = customQuery || query;
+
+    if (!finalQuery.trim()) return;
+
+    const updatedMessages = [
+      ...messages,
+      {
+        sender: "user",
+        text: finalQuery,
+      },
+    ];
+
+    setMessages(updatedMessages);
+
+    setLoading(true);
+
+    try {
+      const res = await fetch(
+        `${API_URL}/chat?user_id=${user.id}&role=${user.role}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: finalQuery,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.students) {
+        setStudents(data.students);
+      }
+
+      setMessages([
+        ...updatedMessages,
+        {
+          sender: "bot",
+          text: data.response,
+        },
+      ]);
+    } catch (err) {
+      setMessages([
+        ...updatedMessages,
+        {
+          sender: "bot",
+          text: "Server not responding.",
+        },
+      ]);
     }
 
-    .quick-title {
-        font-size: 16px;
-    }
+    setQuery("");
+    setLoading(false);
+  };
 
-    .chat-user,
-    .chat-bot {
-        padding: 12px;
-        font-size: 14px;
-    }
-}
+  // ---------------- LOGIN SCREEN ----------------
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#081028] via-[#0f172a] to-[#111827] flex items-center justify-center px-4 relative overflow-hidden">
 
-</style>
-""", unsafe_allow_html=True)
+        {/* Glow Effects */}
+        <div className="absolute w-[500px] h-[500px] bg-blue-500 opacity-20 blur-3xl rounded-full top-[-100px] left-[-100px]" />
 
-# ---------------- TITLE ----------------
-st.markdown(
-    "<h1 style='text-align:center; color:white;'>EduAI Assistant</h1>",
-    unsafe_allow_html=True
-)
+        <div className="absolute w-[400px] h-[400px] bg-indigo-500 opacity-20 blur-3xl rounded-full bottom-[-100px] right-[-100px]" />
 
-st.markdown(
-    "<p style='text-align:center; color:#94a3b8;'>Smart Academic Support System</p>",
-    unsafe_allow_html=True
-)
+        {/* Login Card */}
+        <div className="bg-[#111827]/90 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-3xl w-full max-w-md shadow-2xl z-10">
 
-# ---------------- SESSION ----------------
-if "user" not in st.session_state:
-    st.session_state.user = None
+          {/* Logo */}
+          <div className="flex flex-col items-center mb-8">
+            <img
+              src={botImage}
+              alt="bot"
+              className="w-20 h-20 md:w-24 md:h-24 rounded-full shadow-2xl mb-5"
+            />
 
-if "chat" not in st.session_state:
-    st.session_state.chat = []
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              EduAI Portal
+            </h1>
 
-# ---------------- QUICK SUGGESTIONS ----------------
-suggestions = [
-    "Show my marks",
-    "Show unit test marks",
-    "Show midterm marks",
-    "Show final exam result",
-    "Show previous exam results",
-    "What rank did I secure?",
-    "Show performance analysis",
-    "What is my improvement area?",
-    "Show assignments",
-    "Any pending homework?",
-    "Show timetable",
-    "When is my Maths class?",
-    "How am I performing academically?"
-]
+            <p className="text-gray-400 text-center text-sm md:text-base">
+              Intelligent Academic Assistant
+            </p>
+          </div>
 
-# ---------------- LEARNING INSIGHTS ----------------
-insights = [
-    "Consistency is more effective than last-minute studying.",
-    "Revision improves long-term memory retention.",
-    "Strong fundamentals create better academic performance.",
-    "Regular practice improves subject confidence.",
-    "Balanced study routines reduce academic stress.",
-    "Understanding concepts is better than memorization."
-]
+          {/* Inputs */}
+          <div className="space-y-5">
 
-random_insight = random.choice(insights)
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) =>
+                setUsername(e.target.value)
+              }
+              className="w-full bg-[#1e293b] text-white p-4 rounded-xl outline-none border border-gray-700 focus:border-blue-500"
+            />
 
-# ---------------- LOGIN ----------------
-if not st.session_state.user:
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+              className="w-full bg-[#1e293b] text-white p-4 rounded-xl outline-none border border-gray-700 focus:border-blue-500"
+            />
 
-    st.markdown("""
-    <div class='insight-box'>
-        <h3>Welcome to EduAI Portal</h3>
-        <p class='small-text'>
-        Access academic performance, assignments,
-        timetable and intelligent student insights instantly.
-        </p>
+            <button
+              onClick={handleLogin}
+              className="w-full bg-blue-600 hover:bg-blue-700 transition-all text-white py-4 rounded-xl font-semibold shadow-lg"
+            >
+              Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------- MAIN DASHBOARD ----------------
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#081028] via-[#0f172a] to-[#172554] text-white flex flex-col md:flex-row">
+
+      {/* SIDEBAR */}
+      <div className="w-full md:w-[320px] bg-[#0f172a]/90 border-r border-white/10 p-4 md:p-6 flex flex-col justify-between">
+
+        <div>
+
+          {/* Header */}
+          <div className="mb-8 md:mb-10">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
+              EduAI Dashboard
+            </h1>
+
+            <p className="text-sm text-slate-400 mt-1">
+              Intelligent Student Workspace
+            </p>
+          </div>
+
+          {/* STUDENT CARDS */}
+          <div className="space-y-4">
+
+            {students.map((student) => (
+              <div
+                key={student.id}
+                className="bg-[#1e293b] p-4 rounded-2xl border border-white/10 shadow-lg"
+              >
+                <div className="flex items-center gap-4">
+
+                  {/* Student Icon */}
+                  <div className="w-11 h-11 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold shadow-md">
+                    {student.name[0]}
+                  </div>
+
+                  {/* Student Info */}
+                  <div>
+                    <h2 className="text-[16px] font-semibold">
+                      {student.name}
+                    </h2>
+
+                    <p className="text-gray-400 text-sm">
+                      Class {student.class}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+          </div>
+
+          {/* INSIGHTS + SUGGESTIONS */}
+          <div className="mt-8 space-y-4">
+
+            {/* Quote Card */}
+            <div className="bg-[#1e293b] border border-white/10 rounded-2xl p-5 shadow-lg">
+
+              <p className="text-sm italic text-slate-300 leading-relaxed">
+                “{randomInsight}”
+              </p>
+
+              <div className="mt-3 text-xs text-slate-500">
+                Daily Learning Insight
+              </div>
+            </div>
+
+            {/* QUICK COMMANDS */}
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 shadow-xl">
+
+              <h3 className="font-semibold text-white mb-4">
+                Quick Suggestions
+              </h3>
+
+              <div className="flex flex-wrap gap-2">
+
+                {[
+                  "Show my marks",
+                  "Show unit test marks",
+                  "Show midterm marks",
+                  "Show final result",
+                  "Show my rank",
+                  "My improvement area",
+                  "Performance analysis",
+                  "Show assignments",
+                  "Pending homework",
+                  "Show timetable",
+                  "When is my Maths class?"
+                ].map((item, index) => (
+
+                  <button
+                    key={index}
+                    onClick={() => sendMessage(item)}
+                    className="text-xs bg-white/15 hover:bg-white/25 transition-all px-3 py-2 rounded-full text-white border border-white/10"
+                  >
+                    {item}
+                  </button>
+
+                ))}
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* LOGOUT */}
+        <button
+          onClick={() => {
+            setUser(null);
+            setStudents([]);
+            setMessages([]);
+          }}
+          className="mt-8 bg-red-500 hover:bg-red-600 transition-all py-4 rounded-xl font-semibold shadow-lg"
+        >
+          Logout
+        </button>
+      </div>
+
+      {/* MAIN CHAT AREA */}
+      <div className="flex-1 flex flex-col min-w-0">
+
+        {/* TOP BAR */}
+        <div className="p-4 md:p-6 border-b border-white/10 bg-[#0f172a]/70 backdrop-blur-lg">
+
+          <div className="flex items-center gap-4">
+
+            <img
+              src={botImage}
+              alt="bot"
+              className="w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg"
+            />
+
+            <div>
+              <h1 className="text-lg md:text-2xl font-bold">
+                EduAI Assistant
+              </h1>
+
+              <p className="text-gray-400 text-sm">
+                Smart Academic Support System
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+        {/* CHAT AREA */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+
+          {/* CHAT MESSAGES */}
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              className={`flex ${
+                msg.sender === "user"
+                  ? "justify-end"
+                  : "justify-start"
+              }`}
+            >
+
+              {msg.sender === "bot" ? (
+                <div className="flex gap-3 items-start max-w-[90%] md:max-w-[75%]">
+
+                  <img
+                    src={botImage}
+                    alt="bot"
+                    className="w-9 h-9 md:w-10 md:h-10 rounded-full shadow-md"
+                  />
+
+                  <div className="bg-[#1e293b] p-4 md:p-5 rounded-2xl whitespace-pre-line border border-white/10 shadow-lg text-sm md:text-base">
+                    {msg.text}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-blue-600 p-4 md:p-5 rounded-2xl max-w-[90%] md:max-w-[75%] shadow-lg whitespace-pre-line text-sm md:text-base">
+                  {msg.text}
+                </div>
+              )}
+
+            </div>
+          ))}
+
+          {loading && (
+            <div className="text-gray-400">
+              Thinking...
+            </div>
+          )}
+        </div>
+
+        {/* INPUT BAR */}
+        <div className="p-4 md:p-6 border-t border-white/10 bg-[#0f172a]/80 backdrop-blur-lg flex gap-3">
+
+          <input
+            type="text"
+            placeholder="Ask about marks, timetable or assignments..."
+            value={query}
+            onChange={(e) =>
+              setQuery(e.target.value)
+            }
+            onKeyDown={(e) =>
+              e.key === "Enter" && sendMessage()
+            }
+            className="flex-1 bg-[#1e293b] text-white p-4 rounded-2xl outline-none border border-white/10 focus:border-blue-500 text-sm md:text-base"
+          />
+
+          <button
+            onClick={() => sendMessage()}
+            className="bg-blue-600 hover:bg-blue-700 px-5 md:px-8 rounded-2xl font-semibold transition-all shadow-lg"
+          >
+            Send
+          </button>
+
+        </div>
+      </div>
     </div>
-    """, unsafe_allow_html=True)
+  );
+}
 
-    st.subheader("Login")
-
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-
-    if st.button("Login"):
-
-        with st.spinner("Connecting..."):
-
-            try:
-
-                res = requests.post(
-                    f"{API_URL}/login",
-                    params={
-                        "username": username,
-                        "password": password
-                    },
-                    timeout=15
-                )
-
-                data = res.json()
-
-                if "error" not in data:
-
-                    st.session_state.user = data
-                    st.session_state.chat = []
-
-                    st.session_state.chat.append((
-                        "Bot",
-                        "Welcome to EduAI Assistant.\n\nYou can ask about:\n• Marks\n• Assignments\n• Timetable"
-                    ))
-
-                    st.rerun()
-
-                else:
-                    st.error("Invalid credentials")
-
-            except:
-                st.error("Server not responding")
-
-# ---------------- CHAT AREA ----------------
-else:
-
-    user = st.session_state.user
-
-    st.success(f"Logged in as: {user['role']}")
-
-    # ---------------- INSIGHT BOX ----------------
-    st.markdown(f"""
-    <div class='insight-box'>
-        <h3>Daily Learning Insight</h3>
-        <p class='small-text'>
-        “{random_insight}”
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # ---------------- QUICK SUGGESTIONS ----------------
-    st.markdown(
-        "<div class='quick-title'>Quick Suggestions</div>",
-        unsafe_allow_html=True
-    )
-
-    cols = st.columns(2)
-
-    for i, suggestion in enumerate(suggestions):
-
-        if cols[i % 2].button(suggestion):
-
-            with st.spinner("Thinking..."):
-
-                try:
-
-                    res = requests.post(
-                        f"{API_URL}/chat",
-                        params={
-                            "user_id": user["id"],
-                            "role": user["role"]
-                        },
-                        json={"query": suggestion},
-                        timeout=15
-                    )
-
-                    data = res.json()
-
-                    st.session_state.chat.append((
-                        "You",
-                        suggestion
-                    ))
-
-                    st.session_state.chat.append((
-                        "Bot",
-                        data["response"]
-                    ))
-
-                    st.rerun()
-
-                except:
-                    st.error("Unable to fetch response")
-
-    st.divider()
-
-    # ---------------- CHAT HISTORY ----------------
-    for sender, msg in st.session_state.chat:
-
-        if sender == "You":
-
-            st.markdown(
-                f"<div class='chat-user'><b>🧑 You:</b><br>{msg}</div>",
-                unsafe_allow_html=True
-            )
-
-        else:
-
-            formatted_msg = msg.replace("\n", "<br>")
-
-            st.markdown(
-                f"<div class='chat-bot'><b>🤖 EduAI:</b><br>{formatted_msg}</div>",
-                unsafe_allow_html=True
-            )
-
-    # ---------------- INPUT ----------------
-    query = st.text_input(
-        "Ask about marks, performance, assignments or timetable..."
-    )
-
-    if st.button("Send"):
-
-        if query:
-
-            with st.spinner("Thinking..."):
-
-                try:
-
-                    res = requests.post(
-                        f"{API_URL}/chat",
-                        params={
-                            "user_id": user["id"],
-                            "role": user["role"]
-                        },
-                        json={"query": query},
-                        timeout=15
-                    )
-
-                    data = res.json()
-
-                    st.session_state.chat.append((
-                        "You",
-                        query
-                    ))
-
-                    st.session_state.chat.append((
-                        "Bot",
-                        data["response"]
-                    ))
-
-                    st.rerun()
-
-                except:
-                    st.error("Unable to fetch response")
-
-    # ---------------- LOGOUT ----------------
-    st.divider()
-
-    if st.button("Logout"):
-
-        st.session_state.user = None
-        st.session_state.chat = []
-
-        st.rerun()
+export default App;
