@@ -199,7 +199,6 @@ function App() {
             >
               Login
             </button>
-
           </div>
         </div>
       </div>
@@ -208,24 +207,22 @@ function App() {
 
   // ---------------- MAIN DASHBOARD ----------------
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#081028] via-[#0f172a] to-[#172554] text-white flex flex-col md:flex-row">
+    <div className="min-h-screen bg-gradient-to-br from-[#081028] via-[#0f172a] to-[#172554] text-white flex flex-col lg:flex-row">
 
       {/* SIDEBAR */}
-      <div className="w-full md:w-[320px] bg-[#0f172a]/90 border-r border-white/10 p-4 md:p-6 flex flex-col justify-between">
+      <div className="w-full lg:w-[320px] bg-[#0f172a]/90 lg:border-r border-white/10 p-4 md:p-6 flex flex-col justify-between">
 
         <div>
 
           {/* Header */}
           <div className="mb-8 md:mb-10">
-
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
+            <h1 className="text-3xl md:text-3xl font-bold tracking-tight text-white leading-tight">
               EduAI Dashboard
             </h1>
 
             <p className="text-sm text-slate-400 mt-1">
               Intelligent Student Workspace
             </p>
-
           </div>
 
           {/* STUDENT CARDS */}
@@ -236,25 +233,22 @@ function App() {
                 key={student.id}
                 className="bg-[#1e293b] p-4 rounded-2xl border border-white/10 shadow-lg"
               >
-
                 <div className="flex items-center gap-4">
 
                   {/* Student Icon */}
-                  <div className="w-11 h-11 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold shadow-md">
+                  <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold shadow-md shrink-0">
                     {student.name[0]}
                   </div>
 
                   {/* Student Info */}
-                  <div>
-
-                    <h2 className="text-[16px] font-semibold">
+                  <div className="min-w-0">
+                    <h2 className="text-[18px] font-semibold break-words">
                       {student.name}
                     </h2>
 
                     <p className="text-gray-400 text-sm">
                       Class {student.class}
                     </p>
-
                   </div>
                 </div>
               </div>
@@ -262,10 +256,10 @@ function App() {
 
           </div>
 
-          {/* INSIGHTS + QUICK SUGGESTIONS */}
+          {/* INSIGHTS + SUGGESTIONS */}
           <div className="mt-8 space-y-4">
 
-            {/* Insight Card */}
+            {/* Quote Card */}
             <div className="bg-[#1e293b] border border-white/10 rounded-2xl p-5 shadow-lg">
 
               <p className="text-sm italic text-slate-300 leading-relaxed">
@@ -275,17 +269,17 @@ function App() {
               <div className="mt-3 text-xs text-slate-500">
                 Daily Learning Insight
               </div>
-
             </div>
 
             {/* QUICK COMMANDS */}
             <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 shadow-xl">
 
-              <h3 className="font-semibold text-white mb-4">
+              <h3 className="font-semibold text-white mb-4 text-lg">
                 Quick Suggestions
               </h3>
 
-              <div className="flex flex-wrap gap-2">
+              {/* MOBILE SCROLLABLE */}
+              <div className="flex gap-3 overflow-x-auto pb-2 lg:hidden scrollbar-hide">
 
                 {[
                   "Show my marks",
@@ -300,6 +294,36 @@ function App() {
                   "Show timetable",
                   "When is my Maths class?"
                 ].map((item, index) => (
+
+                  <button
+                    key={index}
+                    onClick={() => sendMessage(item)}
+                    className="whitespace-nowrap text-sm bg-white/15 hover:bg-white/25 transition-all px-4 py-3 rounded-full text-white border border-white/10 shrink-0"
+                  >
+                    {item}
+                  </button>
+
+                ))}
+
+              </div>
+
+              {/* DESKTOP WRAP */}
+              <div className="hidden lg:flex flex-wrap gap-2">
+
+                {[
+                  "Show my marks",
+                  "Show unit test marks",
+                  "Show midterm marks",
+                  "Show final result",
+                  "Show my rank",
+                  "My improvement area",
+                  "Performance analysis",
+                  "Show assignments",
+                  "Pending homework",
+                  "Show timetable",
+                  "When is my Maths class?"
+                ].map((item, index) => (
+
                   <button
                     key={index}
                     onClick={() => sendMessage(item)}
@@ -307,6 +331,7 @@ function App() {
                   >
                     {item}
                   </button>
+
                 ))}
 
               </div>
@@ -326,7 +351,6 @@ function App() {
         >
           Logout
         </button>
-
       </div>
 
       {/* MAIN CHAT AREA */}
@@ -340,20 +364,19 @@ function App() {
             <img
               src={botImage}
               alt="bot"
-              className="w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg"
+              className="w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg shrink-0"
             />
 
-            <div>
-
-              <h1 className="text-lg md:text-2xl font-bold">
+            <div className="min-w-0">
+              <h1 className="text-lg md:text-2xl font-bold break-words">
                 EduAI Assistant
               </h1>
 
               <p className="text-gray-400 text-sm">
                 Smart Academic Support System
               </p>
-
             </div>
+
           </div>
         </div>
 
@@ -372,27 +395,22 @@ function App() {
             >
 
               {msg.sender === "bot" ? (
-
-                <div className="flex gap-3 items-start max-w-[90%] md:max-w-[75%]">
+                <div className="flex gap-3 items-start max-w-[95%] md:max-w-[75%]">
 
                   <img
                     src={botImage}
                     alt="bot"
-                    className="w-9 h-9 md:w-10 md:h-10 rounded-full shadow-md"
+                    className="w-9 h-9 md:w-10 md:h-10 rounded-full shadow-md shrink-0"
                   />
 
-                  <div className="bg-[#1e293b] p-4 md:p-5 rounded-2xl whitespace-pre-line border border-white/10 shadow-lg text-sm md:text-base">
+                  <div className="bg-[#1e293b] p-4 md:p-5 rounded-2xl whitespace-pre-line border border-white/10 shadow-lg text-sm md:text-base break-words">
                     {msg.text}
                   </div>
-
                 </div>
-
               ) : (
-
-                <div className="bg-blue-600 p-4 md:p-5 rounded-2xl max-w-[90%] md:max-w-[75%] shadow-lg whitespace-pre-line text-sm md:text-base">
+                <div className="bg-blue-600 p-4 md:p-5 rounded-2xl max-w-[95%] md:max-w-[75%] shadow-lg whitespace-pre-line text-sm md:text-base break-words">
                   {msg.text}
                 </div>
-
               )}
 
             </div>
@@ -403,7 +421,6 @@ function App() {
               Thinking...
             </div>
           )}
-
         </div>
 
         {/* INPUT BAR */}
@@ -419,12 +436,12 @@ function App() {
             onKeyDown={(e) =>
               e.key === "Enter" && sendMessage()
             }
-            className="flex-1 bg-[#1e293b] text-white p-4 rounded-2xl outline-none border border-white/10 focus:border-blue-500 text-sm md:text-base"
+            className="flex-1 min-w-0 bg-[#1e293b] text-white p-4 rounded-2xl outline-none border border-white/10 focus:border-blue-500 text-sm md:text-base"
           />
 
           <button
             onClick={() => sendMessage()}
-            className="bg-blue-600 hover:bg-blue-700 px-5 md:px-8 rounded-2xl font-semibold transition-all shadow-lg"
+            className="bg-blue-600 hover:bg-blue-700 px-5 md:px-8 rounded-2xl font-semibold transition-all shadow-lg shrink-0"
           >
             Send
           </button>
