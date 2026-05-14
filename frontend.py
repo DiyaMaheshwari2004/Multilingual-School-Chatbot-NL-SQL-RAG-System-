@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import random
 
 API_URL = "https://multilingual-school-chatbot-nl-sql-rag.onrender.com"
 
@@ -17,6 +18,13 @@ st.markdown("""
 .main {
     background: linear-gradient(135deg, #0f172a, #111827);
     color: white;
+}
+
+/* Mobile Responsive */
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    max-width: 900px;
 }
 
 .stTextInput > div > div > input {
@@ -47,6 +55,7 @@ st.markdown("""
     border-radius: 14px;
     margin-bottom: 12px;
     color: white;
+    word-wrap: break-word;
 }
 
 .chat-bot {
@@ -56,6 +65,7 @@ st.markdown("""
     margin-bottom: 12px;
     color: white;
     border: 1px solid #334155;
+    word-wrap: break-word;
 }
 
 .quick-title {
@@ -77,6 +87,36 @@ st.markdown("""
 .small-text {
     color: #cbd5e1;
     font-size: 14px;
+}
+
+/* Suggestions */
+.suggestion-box {
+    background: #1e293b;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    margin-bottom: 8px;
+    text-align: center;
+    color: white;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+
+    .block-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .quick-title {
+        font-size: 16px;
+    }
+
+    .chat-user,
+    .chat-bot {
+        padding: 12px;
+        font-size: 14px;
+    }
 }
 
 </style>
@@ -106,9 +146,12 @@ suggestions = [
     "Show unit test marks",
     "Show midterm marks",
     "Show final exam result",
+    "Show previous exam results",
     "What rank did I secure?",
+    "Show performance analysis",
     "What is my improvement area?",
     "Show assignments",
+    "Any pending homework?",
     "Show timetable",
     "When is my Maths class?",
     "How am I performing academically?"
@@ -123,8 +166,6 @@ insights = [
     "Balanced study routines reduce academic stress.",
     "Understanding concepts is better than memorization."
 ]
-
-import random
 
 random_insight = random.choice(insights)
 
@@ -264,7 +305,7 @@ else:
 
     # ---------------- INPUT ----------------
     query = st.text_input(
-        "Ask about marks, assignments or timetable..."
+        "Ask about marks, performance, assignments or timetable..."
     )
 
     if st.button("Send"):
