@@ -205,22 +205,37 @@ function App() {
     );
   }
 
+  // ---------------- QUICK SUGGESTIONS ----------------
+  const quickSuggestions = [
+    "Show my marks",
+    "Show unit test marks",
+    "Show midterm marks",
+    "Show final result",
+    "Show my rank",
+    "My improvement area",
+    "Performance analysis",
+    "Show assignments",
+    "Pending homework",
+    "Show timetable",
+    "When is my Maths class?"
+  ];
+
   // ---------------- MAIN DASHBOARD ----------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#081028] via-[#0f172a] to-[#172554] text-white flex flex-col lg:flex-row">
 
       {/* SIDEBAR */}
-      <div className="w-full lg:w-[320px] bg-[#0f172a]/90 lg:border-r border-white/10 p-4 md:p-6 flex flex-col justify-between">
+      <div className="w-full lg:w-[320px] bg-[#0f172a]/90 lg:border-r border-white/10 p-5 lg:p-6 flex flex-col justify-between">
 
         <div>
 
           {/* Header */}
-          <div className="mb-8 md:mb-10">
-            <h1 className="text-3xl md:text-3xl font-bold tracking-tight text-white leading-tight">
+          <div className="mb-8">
+            <h1 className="text-4xl lg:text-3xl font-bold tracking-tight text-white">
               EduAI Dashboard
             </h1>
 
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-base lg:text-sm text-slate-400 mt-2">
               Intelligent Student Workspace
             </p>
           </div>
@@ -231,110 +246,85 @@ function App() {
             {students.map((student) => (
               <div
                 key={student.id}
-                className="bg-[#1e293b] p-4 rounded-2xl border border-white/10 shadow-lg"
+                className="bg-[#1e293b] p-5 rounded-3xl border border-white/10 shadow-lg"
               >
                 <div className="flex items-center gap-4">
 
-                  {/* Student Icon */}
-                  <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold shadow-md shrink-0">
+                  <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-2xl font-bold shadow-md">
                     {student.name[0]}
                   </div>
 
-                  {/* Student Info */}
-                  <div className="min-w-0">
-                    <h2 className="text-[18px] font-semibold break-words">
+                  <div>
+                    <h2 className="text-2xl lg:text-[18px] font-semibold">
                       {student.name}
                     </h2>
 
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-gray-400 text-lg lg:text-sm">
                       Class {student.class}
                     </p>
                   </div>
+
                 </div>
               </div>
             ))}
 
           </div>
 
-          {/* INSIGHTS + SUGGESTIONS */}
-          <div className="mt-8 space-y-4">
+          {/* INSIGHT */}
+          <div className="mt-8">
 
-            {/* Quote Card */}
-            <div className="bg-[#1e293b] border border-white/10 rounded-2xl p-5 shadow-lg">
+            <div className="bg-[#1e293b] border border-white/10 rounded-3xl p-6 shadow-lg">
 
-              <p className="text-sm italic text-slate-300 leading-relaxed">
+              <p className="text-lg lg:text-sm italic text-slate-300 leading-relaxed">
                 “{randomInsight}”
               </p>
 
-              <div className="mt-3 text-xs text-slate-500">
+              <div className="mt-4 text-sm text-slate-500">
                 Daily Learning Insight
               </div>
             </div>
 
-            {/* QUICK COMMANDS */}
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 shadow-xl">
+          </div>
 
-              <h3 className="font-semibold text-white mb-4 text-lg">
-                Quick Suggestions
-              </h3>
+          {/* QUICK SUGGESTIONS */}
+          <div className="mt-8 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 shadow-xl overflow-hidden">
 
-              {/* MOBILE SCROLLABLE */}
-              <div className="flex gap-3 overflow-x-auto pb-2 lg:hidden scrollbar-hide">
+            <h3 className="font-semibold text-white mb-5 text-2xl lg:text-lg">
+              Quick Suggestions
+            </h3>
 
-                {[
-                  "Show my marks",
-                  "Show unit test marks",
-                  "Show midterm marks",
-                  "Show final result",
-                  "Show my rank",
-                  "My improvement area",
-                  "Performance analysis",
-                  "Show assignments",
-                  "Pending homework",
-                  "Show timetable",
-                  "When is my Maths class?"
-                ].map((item, index) => (
+            {/* Desktop Grid */}
+            <div className="hidden lg:flex flex-wrap gap-2">
 
-                  <button
-                    key={index}
-                    onClick={() => sendMessage(item)}
-                    className="whitespace-nowrap text-sm bg-white/15 hover:bg-white/25 transition-all px-4 py-3 rounded-full text-white border border-white/10 shrink-0"
-                  >
-                    {item}
-                  </button>
+              {quickSuggestions.map((item, index) => (
 
-                ))}
+                <button
+                  key={index}
+                  onClick={() => sendMessage(item)}
+                  className="text-xs bg-white/15 hover:bg-white/25 transition-all px-3 py-2 rounded-full text-white border border-white/10"
+                >
+                  {item}
+                </button>
 
-              </div>
+              ))}
 
-              {/* DESKTOP WRAP */}
-              <div className="hidden lg:flex flex-wrap gap-2">
+            </div>
 
-                {[
-                  "Show my marks",
-                  "Show unit test marks",
-                  "Show midterm marks",
-                  "Show final result",
-                  "Show my rank",
-                  "My improvement area",
-                  "Performance analysis",
-                  "Show assignments",
-                  "Pending homework",
-                  "Show timetable",
-                  "When is my Maths class?"
-                ].map((item, index) => (
+            {/* Mobile Horizontal Scroll */}
+            <div className="flex lg:hidden gap-3 overflow-x-auto pb-2 scrollbar-hide">
 
-                  <button
-                    key={index}
-                    onClick={() => sendMessage(item)}
-                    className="text-xs bg-white/15 hover:bg-white/25 transition-all px-3 py-2 rounded-full text-white border border-white/10"
-                  >
-                    {item}
-                  </button>
+              {quickSuggestions.map((item, index) => (
 
-                ))}
+                <button
+                  key={index}
+                  onClick={() => sendMessage(item)}
+                  className="whitespace-nowrap text-base bg-white/15 hover:bg-white/25 transition-all px-5 py-3 rounded-full text-white border border-white/10 shrink-0"
+                >
+                  {item}
+                </button>
 
-              </div>
+              ))}
+
             </div>
 
           </div>
@@ -347,7 +337,7 @@ function App() {
             setStudents([]);
             setMessages([]);
           }}
-          className="mt-8 bg-red-500 hover:bg-red-600 transition-all py-4 rounded-xl font-semibold shadow-lg"
+          className="mt-8 bg-red-500 hover:bg-red-600 transition-all py-4 rounded-2xl font-semibold shadow-lg text-lg"
         >
           Logout
         </button>
@@ -357,22 +347,22 @@ function App() {
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* TOP BAR */}
-        <div className="p-4 md:p-6 border-b border-white/10 bg-[#0f172a]/70 backdrop-blur-lg">
+        <div className="p-5 lg:p-6 border-b border-white/10 bg-[#0f172a]/70 backdrop-blur-lg">
 
           <div className="flex items-center gap-4">
 
             <img
               src={botImage}
               alt="bot"
-              className="w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg shrink-0"
+              className="w-14 h-14 rounded-full shadow-lg"
             />
 
-            <div className="min-w-0">
-              <h1 className="text-lg md:text-2xl font-bold break-words">
+            <div>
+              <h1 className="text-3xl lg:text-2xl font-bold">
                 EduAI Assistant
               </h1>
 
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-400 text-base lg:text-sm">
                 Smart Academic Support System
               </p>
             </div>
@@ -381,9 +371,8 @@ function App() {
         </div>
 
         {/* CHAT AREA */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <div className="flex-1 overflow-y-auto p-5 lg:p-8 space-y-6">
 
-          {/* CHAT MESSAGES */}
           {messages.map((msg, index) => (
             <div
               key={index}
@@ -395,36 +384,40 @@ function App() {
             >
 
               {msg.sender === "bot" ? (
-                <div className="flex gap-3 items-start max-w-[95%] md:max-w-[75%]">
+
+                <div className="flex gap-3 items-start max-w-[95%] lg:max-w-[75%]">
 
                   <img
                     src={botImage}
                     alt="bot"
-                    className="w-9 h-9 md:w-10 md:h-10 rounded-full shadow-md shrink-0"
+                    className="w-10 h-10 rounded-full shadow-md"
                   />
 
-                  <div className="bg-[#1e293b] p-4 md:p-5 rounded-2xl whitespace-pre-line border border-white/10 shadow-lg text-sm md:text-base break-words">
+                  <div className="bg-[#1e293b] p-5 rounded-3xl whitespace-pre-line border border-white/10 shadow-lg text-lg lg:text-base leading-relaxed">
                     {msg.text}
                   </div>
                 </div>
+
               ) : (
-                <div className="bg-blue-600 p-4 md:p-5 rounded-2xl max-w-[95%] md:max-w-[75%] shadow-lg whitespace-pre-line text-sm md:text-base break-words">
+
+                <div className="bg-blue-600 p-5 rounded-3xl max-w-[90%] lg:max-w-[75%] shadow-lg whitespace-pre-line text-lg lg:text-base">
                   {msg.text}
                 </div>
+
               )}
 
             </div>
           ))}
 
           {loading && (
-            <div className="text-gray-400">
+            <div className="text-gray-400 text-lg">
               Thinking...
             </div>
           )}
         </div>
 
         {/* INPUT BAR */}
-        <div className="p-4 md:p-6 border-t border-white/10 bg-[#0f172a]/80 backdrop-blur-lg flex gap-3">
+        <div className="p-4 lg:p-6 border-t border-white/10 bg-[#0f172a]/80 backdrop-blur-lg flex gap-3 sticky bottom-0">
 
           <input
             type="text"
@@ -436,12 +429,12 @@ function App() {
             onKeyDown={(e) =>
               e.key === "Enter" && sendMessage()
             }
-            className="flex-1 min-w-0 bg-[#1e293b] text-white p-4 rounded-2xl outline-none border border-white/10 focus:border-blue-500 text-sm md:text-base"
+            className="flex-1 bg-[#1e293b] text-white p-4 rounded-2xl outline-none border border-white/10 focus:border-blue-500 text-base"
           />
 
           <button
             onClick={() => sendMessage()}
-            className="bg-blue-600 hover:bg-blue-700 px-5 md:px-8 rounded-2xl font-semibold transition-all shadow-lg shrink-0"
+            className="bg-blue-600 hover:bg-blue-700 px-6 lg:px-8 rounded-2xl font-semibold transition-all shadow-lg text-base"
           >
             Send
           </button>
