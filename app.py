@@ -6,10 +6,10 @@ import database
 from chatbot import chatbot
 from rag import create_embeddings, search_rag
 
+app = FastAPI()
+
 # ---------------- CREATE RAG EMBEDDINGS ----------------
 create_embeddings()
-
-app = FastAPI()
 
 # ---------------- CORS ----------------
 app.add_middleware(

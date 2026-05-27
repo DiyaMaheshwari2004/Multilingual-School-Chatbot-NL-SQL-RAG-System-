@@ -68,9 +68,39 @@ def chatbot(query, role, students):
         if sub in query:
             selected_subject = sub.capitalize()
 
+    # ---------------- IMPROVEMENT AREA ----------------
+
+    if "improvement" in query:
+
+        response = "📘 Improvement Analysis:\n"
+
+        for s in students:
+
+            cursor.execute(
+                """
+                SELECT subject, AVG(marks)
+                FROM marks
+                WHERE student_id=?
+                GROUP BY subject
+                ORDER BY AVG(marks) ASC
+                LIMIT 1
+                """,
+                (s["id"],)
+            )
+
+            data = cursor.fetchone()
+
+            if data:
+
+                response += (
+                    f"\n{s['name']}:\n"
+                    f"Focus more on {data[0]}.\n"
+                    f"Current Average: {data[1]:.1f}%\n"
+                )
+
     # ---------------- PERFORMANCE ----------------
 
-    if any(word in query for word in performance_keywords):
+    elif any(word in query for word in performance_keywords):
 
         response = "📊 Academic Performance:\n"
 
@@ -299,36 +329,6 @@ def chatbot(query, role, students):
                         f"• {d[2]} | "
                         f"{d[0]} at {d[1]}\n"
                     )
-
-    # ---------------- IMPROVEMENT AREA ----------------
-
-    elif "improvement" in query:
-
-        response = "📘 Improvement Analysis:\n"
-
-        for s in students:
-
-            cursor.execute(
-                """
-                SELECT subject, AVG(marks)
-                FROM marks
-                WHERE student_id=?
-                GROUP BY subject
-                ORDER BY AVG(marks) ASC
-                LIMIT 1
-                """,
-                (s["id"],)
-            )
-
-            data = cursor.fetchone()
-
-            if data:
-
-                response += (
-                    f"\n{s['name']}:\n"
-                    f"Focus more on {data[0]}.\n"
-                    f"Current Average: {data[1]:.1f}%\n"
-                )
 
     # ---------------- DEFAULT ----------------
 
