@@ -1,138 +1,84 @@
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from sentence_transformers import SentenceTransformer
-from pypdf import PdfReader
-import chromadb
 import os
+from PyPDF2 import PdfReader
 
-# ---------------- EMBEDDING MODEL ----------------
-embedding_model = SentenceTransformer(
-    "all-MiniLM-L6-v2"
-)
+# ---------------- STORE DOCUMENTS ----------------
+documents = []
 
-# ---------------- CHROMA DB ----------------
-client = chromadb.PersistentClient(
-    path="chroma_db"
-)
 
-collection = client.get_or_create_collection(
-    name="school_rag"
-)
-
-# ---------------- DOCUMENT FOLDER ----------------
-DOCS_FOLDER = "school_docs"
-
-# ---------------- LOAD ALL PDFS ----------------
+# ---------------- LOAD ALL PDF FILES ----------------
 def load_pdfs():
 
-    documents = []
+    global documents
 
-    for root, dirs, files in os.walk(DOCS_FOLDER):
+    base_folder = "school_docs"
+
+    if not os.path.exists(base_folder):
+        print("school_docs folder not found")
+        return
+
+    for root, dirs, files in os.walk(base_folder):
 
         for file in files:
 
             if file.endswith(".pdf"):
 
-                pdf_path = os.path.join(root, file)
+                file_path = os.path.join(root, file)
 
                 try:
+                    reader = PdfReader(file_path)
 
-                    reader = PdfReader(pdf_path)
-
-                    text = ""
+                    full_text = ""
 
                     for page in reader.pages:
 
-                        extracted = page.extract_text()
+                        text = page.extract_text()
 
-                        if extracted:
-                            text += extracted
+                        if text:
+                            full_text += text + " "
 
                     documents.append({
-                        "file": file,
-                        "text": text
+                        "file_name": file,
+                        "content": full_text.lower()
                     })
 
-                    print(f"Loaded: {file}")
+                    print(f"Loaded PDF: {file}")
 
                 except Exception as e:
+                    print(f"Error loading {file}: {e}")
 
-                    print(f"Error reading {file}: {e}")
 
-    return documents
+# ---------------- SEARCH FUNCTION ----------------
+def search_rag(query):
 
-# ---------------- SPLIT TEXT ----------------
-def split_documents(documents):
+    query = query.lower()
 
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=100
-    )
-
-    chunks = []
+    best_match = None
+    highest_score = 0
 
     for doc in documents:
 
-        split_texts = splitter.split_text(
-            doc["text"]
+        score = 0
+
+        for word in query.split():
+
+            if word in doc["content"]:
+                score += 1
+
+        if score > highest_score:
+            highest_score = score
+            best_match = doc
+
+    if best_match and highest_score > 0:
+
+        content = best_match["content"][:1200]
+
+        return (
+            f"According to {best_match['file_name']}:\n\n"
+            f"{content}"
         )
 
-        for chunk in split_texts:
+    return "No relevant information found in school documents."
 
-            chunks.append({
-                "text": chunk,
-                "source": doc["file"]
-            })
 
-    return chunks
-
-# ---------------- CREATE EMBEDDINGS ----------------
-def create_embeddings():
-
-    existing = collection.count()
-
-    if existing > 0:
-        print("Embeddings already exist.")
-        return
-
-    print("Creating embeddings...")
-
-    documents = load_pdfs()
-
-    chunks = split_documents(documents)
-
-    for index, chunk in enumerate(chunks):
-
-        embedding = embedding_model.encode(
-            chunk["text"]
-        ).tolist()
-
-        collection.add(
-            ids=[str(index)],
-            embeddings=[embedding],
-            documents=[chunk["text"]],
-            metadatas=[
-                {
-                    "source": chunk["source"]
-                }
-            ]
-        )
-
-    print("Embeddings created successfully.")
-
-# ---------------- SEARCH RAG ----------------
-def search_rag(query):
-
-    query_embedding = embedding_model.encode(
-        query
-    ).tolist()
-
-    results = collection.query(
-        query_embeddings=[query_embedding],
-        n_results=3
-    )
-
-    docs = results["documents"][0]
-
-    context = "\n\n".join(docs)
-
-    return context
+# ---------------- LOAD PDFs ON STARTUP ----------------
+load_pdfs()

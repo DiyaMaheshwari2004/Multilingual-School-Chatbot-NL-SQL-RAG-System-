@@ -30,7 +30,7 @@ def connect_db():
     return sqlite3.connect("school.db")
 
 
-# ---------------- LOGIN ----------------
+# ---------------- LOGIN API ----------------
 @app.post("/login")
 def login(username: str, password: str):
 
@@ -38,7 +38,12 @@ def login(username: str, password: str):
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT role, ref_id FROM users WHERE LOWER(username)=LOWER(?) AND password=?",
+        """
+        SELECT role, ref_id
+        FROM users
+        WHERE LOWER(username)=LOWER(?)
+        AND password=?
+        """,
         (username, password)
     )
 
@@ -55,7 +60,7 @@ def login(username: str, password: str):
     return {"error": "Invalid credentials"}
 
 
-# ---------------- CHAT ----------------
+# ---------------- CHAT API ----------------
 @app.post("/chat")
 def chat(q: Query, user_id: int, role: str):
 
@@ -68,7 +73,11 @@ def chat(q: Query, user_id: int, role: str):
     if role == "student":
 
         cursor.execute(
-            "SELECT id, name, class FROM students WHERE id=?",
+            """
+            SELECT id, name, class
+            FROM students
+            WHERE id=?
+            """,
             (user_id,)
         )
 
@@ -88,7 +97,11 @@ def chat(q: Query, user_id: int, role: str):
     elif role == "parent":
 
         cursor.execute(
-            "SELECT id, name, class FROM students WHERE parent_id=?",
+            """
+            SELECT id, name, class
+            FROM students
+            WHERE parent_id=?
+            """,
             (user_id,)
         )
 
@@ -107,45 +120,19 @@ def chat(q: Query, user_id: int, role: str):
 
     conn.close()
 
-    # ---------------- USER QUERY ----------------
-    user_query = q.query.lower()
+    # ---------------- RAG SEARCH ----------------
+    rag_result = search_rag(q.query)
 
-    # ---------------- RAG KEYWORDS ----------------
-    rag_keywords = [
-        "science",
-        "english",
-        "grammar",
-        "chapter",
-        "ncert",
-        "policy",
-        "policies",
-        "attendance",
-        "explain",
-        "define",
-        "what is",
-        "lesson",
-        "subject",
-        "photosynthesis",
-        "noun",
-        "verb",
-        "force",
-        "motion"
-    ]
+    # ---------------- CHATBOT RESPONSE ----------------
+    chatbot_response = chatbot(q.query, role, students)
 
-    # ---------------- RAG RESPONSE ----------------
-    if any(word in user_query for word in rag_keywords):
+    # ---------------- FINAL RESPONSE ----------------
+    final_response = chatbot_response
 
-        rag_response = search_rag(q.query)
-
-        return {
-            "students": students,
-            "response": rag_response
-        }
-
-    # ---------------- NORMAL CHATBOT RESPONSE ----------------
-    response = chatbot(q.query, role, students)
+    if rag_result:
+        final_response += f"\n\n📘 Knowledge Base:\n{rag_result}"
 
     return {
         "students": students,
-        "response": response
+        "response": final_response
     }
