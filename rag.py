@@ -10,7 +10,7 @@ def load_pdfs():
 
     global documents
 
-    base_folder = "school_docs"
+    base_folder = "school_docs_"
 
     if not os.path.exists(base_folder):
         print("school_docs folder not found")
