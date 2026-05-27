@@ -4,6 +4,10 @@ from pydantic import BaseModel
 import sqlite3
 import database
 from chatbot import chatbot
+from rag import create_embeddings, search_rag
+
+# ---------------- CREATE RAG EMBEDDINGS ----------------
+create_embeddings()
 
 app = FastAPI()
 
@@ -103,7 +107,42 @@ def chat(q: Query, user_id: int, role: str):
 
     conn.close()
 
-    # ---------------- CHATBOT RESPONSE ----------------
+    # ---------------- USER QUERY ----------------
+    user_query = q.query.lower()
+
+    # ---------------- RAG KEYWORDS ----------------
+    rag_keywords = [
+        "science",
+        "english",
+        "grammar",
+        "chapter",
+        "ncert",
+        "policy",
+        "policies",
+        "attendance",
+        "explain",
+        "define",
+        "what is",
+        "lesson",
+        "subject",
+        "photosynthesis",
+        "noun",
+        "verb",
+        "force",
+        "motion"
+    ]
+
+    # ---------------- RAG RESPONSE ----------------
+    if any(word in user_query for word in rag_keywords):
+
+        rag_response = search_rag(q.query)
+
+        return {
+            "students": students,
+            "response": rag_response
+        }
+
+    # ---------------- NORMAL CHATBOT RESPONSE ----------------
     response = chatbot(q.query, role, students)
 
     return {
