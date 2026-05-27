@@ -4,3 +4,7 @@ pydantic
 requests
 streamlit
 sentence-transformers
+numpy
+scikit-learn
+PyPDF2
+torch
