@@ -1,8 +1,9 @@
 fastapi
 uvicorn
 pydantic
-requests
-streamlit
-PyPDF2
+sentence-transformers==2.2.2
+faiss-cpu
+numpy
+pypdf
 python-multipart
-
+scikit-learn
