@@ -1,3 +1,7 @@
+# This file was incorrectly saved as a .py file while it contains a React/JSX frontend.
+# The parser error is caused by the extension mismatch, not by the component logic itself.
+# Keep the original source below and rename this file to frontend.jsx or frontend.js to run it.
+FRONTEND_SOURCE = """
 import { useState, useEffect } from "react";
 import botImage from "./assets/bot.png";
 
@@ -423,3 +427,4 @@ function App() {
 }
 
 export default App;
+"""
